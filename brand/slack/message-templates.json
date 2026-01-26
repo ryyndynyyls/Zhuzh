@@ -1,0 +1,152 @@
+{
+  "friday_confirmation": {
+    "normal": {
+      "text": "Hey! ✨ Time to zhuzh your week.",
+      "blocks": [
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": "Hey! ✨ Time to zhuzh your week.\n\nHere's what was planned:"
+          }
+        },
+        {
+          "type": "section",
+          "fields": [
+            { "type": "mrkdwn", "text": "*Project A*\n20 hours" },
+            { "type": "mrkdwn", "text": "*Project B*\n12 hours" }
+          ]
+        },
+        {
+          "type": "actions",
+          "elements": [
+            {
+              "type": "button",
+              "text": { "type": "plain_text", "text": "Looks good ✓", "emoji": true },
+              "style": "primary",
+              "action_id": "confirm_week"
+            },
+            {
+              "type": "button",
+              "text": { "type": "plain_text", "text": "Adjust hours", "emoji": true },
+              "action_id": "adjust_hours"
+            }
+          ]
+        }
+      ]
+    },
+    "partial_week": {
+      "text": "Hey! ✨ Short week this week—let's zhuzh what you worked.",
+      "blocks": [
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": "Hey! ✨ Short week—you were out *{days_out}*.\n\nHere's what was planned for your working days:"
+          }
+        }
+      ]
+    },
+    "single_day": {
+      "text": "Hey! ✨ Quick one—just one day to confirm this week.",
+      "blocks": [
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": "Hey! ✨ You were mostly out this week (PTO/holiday).\n\nJust need to confirm *{work_day}*:"
+          }
+        }
+      ]
+    }
+  },
+  "submission_received": {
+    "text": "Got it! ✨ Your timesheet is submitted.",
+    "blocks": [
+      {
+        "type": "section",
+        "text": {
+          "type": "mrkdwn",
+          "text": "Got it! ✨ Your timesheet is submitted.\n\n*Week of {week_start}*\nTotal: {total_hours} hours across {project_count} projects"
+        }
+      },
+      {
+        "type": "context",
+        "elements": [
+          { "type": "mrkdwn", "text": "Pending manager approval • You'll hear back soon" }
+        ]
+      }
+    ]
+  },
+  "approval_needed": {
+    "text": "New timesheet to review from {employee_name}",
+    "blocks": [
+      {
+        "type": "section",
+        "text": {
+          "type": "mrkdwn",
+          "text": "📋 *{employee_name}* submitted their timesheet\n*Week of {week_start}*"
+        }
+      },
+      {
+        "type": "section",
+        "fields": [
+          { "type": "mrkdwn", "text": "*Planned*\n{planned_hours}h" },
+          { "type": "mrkdwn", "text": "*Actual*\n{actual_hours}h" },
+          { "type": "mrkdwn", "text": "*Variance*\n{variance}" }
+        ]
+      },
+      {
+        "type": "actions",
+        "elements": [
+          {
+            "type": "button",
+            "text": { "type": "plain_text", "text": "Approve ✓", "emoji": true },
+            "style": "primary",
+            "action_id": "approve_timesheet"
+          },
+          {
+            "type": "button",
+            "text": { "type": "plain_text", "text": "View details", "emoji": true },
+            "action_id": "view_timesheet"
+          }
+        ]
+      }
+    ]
+  },
+  "approved": {
+    "text": "Your timesheet was approved! ✨",
+    "blocks": [
+      {
+        "type": "section",
+        "text": {
+          "type": "mrkdwn",
+          "text": "✨ *Approved!* Your timesheet for the week of {week_start} is all set."
+        }
+      }
+    ]
+  },
+  "reminder": {
+    "text": "Friendly reminder to zhuzh your week! ✨",
+    "blocks": [
+      {
+        "type": "section",
+        "text": {
+          "type": "mrkdwn",
+          "text": "Hey! ✨ Quick reminder—your timesheet for this week is waiting.\n\nTakes about 10 seconds if your plan was accurate!"
+        }
+      },
+      {
+        "type": "actions",
+        "elements": [
+          {
+            "type": "button",
+            "text": { "type": "plain_text", "text": "Confirm now", "emoji": true },
+            "style": "primary",
+            "action_id": "open_confirmation"
+          }
+        ]
+      }
+    ]
+  }
+}

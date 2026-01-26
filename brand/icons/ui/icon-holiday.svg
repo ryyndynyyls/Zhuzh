@@ -1,0 +1,6 @@
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="4" y="10" width="16" height="11" rx="2" stroke="#33332F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M12 21V10M4 14H20M9 10C9 10 9 6 12 6C15 6 15 10 15 10" stroke="#33332F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Holiday Sparkle -->
+  <path d="M18 3C18 4.10457 17.1046 5 16 5C17.1046 5 18 5.89543 18 7C18 5.89543 18.8954 5 20 5C18.8954 5 18 4.10457 18 3Z" fill="#FFF845" stroke="#33332F" stroke-width="1.5" stroke-linejoin="round"/>
+</svg>

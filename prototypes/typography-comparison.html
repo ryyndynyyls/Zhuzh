@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zhuzh Typography Comparison</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&family=Outfit:wght@400;500;600;700&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Geist (Vercel's font - very Linear-like) -->
+  <link href="https://cdn.jsdelivr.net/npm/geist@1.2.0/dist/fonts/geist-sans/style.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/geist@1.2.0/dist/fonts/geist-mono/style.min.css" rel="stylesheet">
+  
+  <style>
+    :root {
+      /* Zhuzh Brand Colors */
+      --zhuzh-orange: #FF8731;
+      --zhuzh-yellow: #FFF845;
+      --zhuzh-lime: #80FF9C;
+      --zhuzh-cream: #F7F6E6;
+      --zhuzh-dark: #33332F;
+      --zhuzh-error: #FF6B6B;
+      
+      /* Dark Theme */
+      --bg-primary: #0D0D0C;
+      --bg-secondary: #1A1917;
+      --bg-tertiary: #252521;
+      --bg-card: #1E1E1B;
+      --border-subtle: rgba(255, 255, 255, 0.06);
+      --border-default: rgba(255, 255, 255, 0.1);
+      --text-primary: #F5F5F4;
+      --text-secondary: #A1A19A;
+      --text-tertiary: #6B6B63;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      padding: 40px;
+      min-height: 100vh;
+    }
+    
+    .page-header {
+      font-family: 'Geist Sans', sans-serif;
+      margin-bottom: 48px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    
+    .page-header h1 {
+      font-size: 28px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      letter-spacing: -0.02em;
+    }
+    
+    .page-header p {
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+    
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 32px;
+      max-width: 1200px;
+    }
+    
+    .option {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 24px;
+      transition: border-color 0.2s ease;
+    }
+    
+    .option:hover {
+      border-color: var(--border-default);
+    }
+    
+    .option-label {
+      font-family: 'Geist Mono', monospace;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--zhuzh-orange);
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    
+    /* Sample Dashboard Card */
+    .sample-card {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 16px;
+    }
+    
+    .card-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+    
+    .card-value {
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+    }
+    
+    .card-value .unit {
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--text-tertiary);
+      margin-left: 2px;
+    }
+    
+    .status-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    
+    .status-chip.healthy {
+      background: rgba(128, 255, 156, 0.12);
+      color: var(--zhuzh-lime);
+    }
+    
+    .status-chip .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+    
+    .card-meta {
+      display: flex;
+      gap: 16px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border-subtle);
+    }
+    
+    .meta-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    
+    .meta-label {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    
+    .meta-value {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    
+    .meta-value.positive {
+      color: var(--zhuzh-lime);
+    }
+    
+    /* Project Row Sample */
+    .project-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+    }
+    
+    .project-color {
+      width: 4px;
+      height: 32px;
+      border-radius: 2px;
+      background: var(--zhuzh-orange);
+    }
+    
+    .project-info {
+      flex: 1;
+    }
+    
+    .project-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 2px;
+    }
+    
+    .project-client {
+      font-size: 12px;
+      color: var(--text-tertiary);
+    }
+    
+    .project-hours {
+      text-align: right;
+    }
+    
+    .hours-value {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    
+    .hours-label {
+      font-size: 11px;
+      color: var(--text-tertiary);
+    }
+    
+    /* Font-specific styles */
+    .font-geist {
+      font-family: 'Geist Sans', -apple-system, sans-serif;
+    }
+    .font-geist .mono {
+      font-family: 'Geist Mono', monospace;
+    }
+    
+    .font-jakarta {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .font-jakarta .mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    
+    .font-manrope {
+      font-family: 'Manrope', sans-serif;
+    }
+    .font-manrope .mono {
+      font-family: 'IBM Plex Mono', monospace;
+    }
+    
+    .font-outfit {
+      font-family: 'Outfit', sans-serif;
+    }
+    .font-outfit .mono {
+      font-family: 'Space Mono', monospace;
+    }
+    
+    /* Recommendation badge */
+    .recommended {
+      position: relative;
+    }
+    
+    .recommended::after {
+      content: '★ Recommended';
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      font-family: 'Geist Mono', monospace;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--zhuzh-orange);
+      background: rgba(255, 135, 49, 0.1);
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+    
+    /* Bottom notes */
+    .notes {
+      margin-top: 48px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border-subtle);
+      font-family: 'Geist Sans', sans-serif;
+    }
+    
+    .notes h3 {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: var(--text-primary);
+    }
+    
+    .notes ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .notes li {
+      font-size: 13px;
+      color: var(--text-secondary);
+      padding-left: 16px;
+      position: relative;
+    }
+    
+    .notes li::before {
+      content: '→';
+      position: absolute;
+      left: 0;
+      color: var(--zhuzh-orange);
+    }
+    
+    .notes code {
+      font-family: 'Geist Mono', monospace;
+      font-size: 12px;
+      background: var(--bg-tertiary);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: var(--text-primary);
+    }
+  </style>
+</head>
+<body>
+  <header class="page-header">
+    <h1>Zhuzh Typography Comparison</h1>
+    <p>Sample dashboard tiles with different font pairings. All fonts are free (Google Fonts or CDN).</p>
+  </header>
+  
+  <div class="grid">
+    <!-- Option 1: Geist (Linear-like) -->
+    <div class="option font-geist recommended">
+      <div class="option-label">Option A: Geist + Geist Mono</div>
+      
+      <div class="sample-card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Team Utilization</div>
+            <div class="card-value">87<span class="unit">%</span></div>
+          </div>
+          <div class="status-chip healthy">
+            <span class="dot"></span>
+            Healthy
+          </div>
+        </div>
+        <div class="card-meta">
+          <div class="meta-item">
+            <span class="meta-label">Allocated</span>
+            <span class="meta-value mono">1,240h</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">This Week</span>
+            <span class="meta-value positive mono">+12%</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="project-row">
+        <div class="project-color"></div>
+        <div class="project-info">
+          <div class="project-name">Google Cloud Next 2026</div>
+          <div class="project-client">Google • Strategy</div>
+        </div>
+        <div class="project-hours">
+          <div class="hours-value mono">24h</div>
+          <div class="hours-label">this week</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Option 2: Plus Jakarta Sans -->
+    <div class="option font-jakarta">
+      <div class="option-label">Option B: Plus Jakarta Sans + JetBrains Mono</div>
+      
+      <div class="sample-card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Team Utilization</div>
+            <div class="card-value">87<span class="unit">%</span></div>
+          </div>
+          <div class="status-chip healthy">
+            <span class="dot"></span>
+            Healthy
+          </div>
+        </div>
+        <div class="card-meta">
+          <div class="meta-item">
+            <span class="meta-label">Allocated</span>
+            <span class="meta-value mono">1,240h</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">This Week</span>
+            <span class="meta-value positive mono">+12%</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="project-row">
+        <div class="project-color"></div>
+        <div class="project-info">
+          <div class="project-name">Google Cloud Next 2026</div>
+          <div class="project-client">Google • Strategy</div>
+        </div>
+        <div class="project-hours">
+          <div class="hours-value mono">24h</div>
+          <div class="hours-label">this week</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Option 3: Manrope -->
+    <div class="option font-manrope">
+      <div class="option-label">Option C: Manrope + IBM Plex Mono</div>
+      
+      <div class="sample-card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Team Utilization</div>
+            <div class="card-value">87<span class="unit">%</span></div>
+          </div>
+          <div class="status-chip healthy">
+            <span class="dot"></span>
+            Healthy
+          </div>
+        </div>
+        <div class="card-meta">
+          <div class="meta-item">
+            <span class="meta-label">Allocated</span>
+            <span class="meta-value mono">1,240h</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">This Week</span>
+            <span class="meta-value positive mono">+12%</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="project-row">
+        <div class="project-color"></div>
+        <div class="project-info">
+          <div class="project-name">Google Cloud Next 2026</div>
+          <div class="project-client">Google • Strategy</div>
+        </div>
+        <div class="project-hours">
+          <div class="hours-value mono">24h</div>
+          <div class="hours-label">this week</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Option 4: Outfit -->
+    <div class="option font-outfit">
+      <div class="option-label">Option D: Outfit + Space Mono</div>
+      
+      <div class="sample-card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Team Utilization</div>
+            <div class="card-value">87<span class="unit">%</span></div>
+          </div>
+          <div class="status-chip healthy">
+            <span class="dot"></span>
+            Healthy
+          </div>
+        </div>
+        <div class="card-meta">
+          <div class="meta-item">
+            <span class="meta-label">Allocated</span>
+            <span class="meta-value mono">1,240h</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">This Week</span>
+            <span class="meta-value positive mono">+12%</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="project-row">
+        <div class="project-color"></div>
+        <div class="project-info">
+          <div class="project-name">Google Cloud Next 2026</div>
+          <div class="project-client">Google • Strategy</div>
+        </div>
+        <div class="project-hours">
+          <div class="hours-value mono">24h</div>
+          <div class="hours-label">this week</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="notes">
+    <h3>Typography Notes</h3>
+    <ul>
+      <li><strong>Geist</strong> — Vercel's font, extremely Linear-like. Clean, professional, great for data-heavy UIs. Free via CDN.</li>
+      <li><strong>Plus Jakarta Sans</strong> — Slightly warmer than Geist, friendly but still professional. Popular with modern SaaS.</li>
+      <li><strong>Manrope</strong> — Geometric sans with personality. Works well at all sizes. Slightly more distinctive.</li>
+      <li><strong>Outfit</strong> — Clean geometric with subtle character. Good for headlines and body text alike.</li>
+      <li>All mono fonts pair well with their sans counterparts. <code>JetBrains Mono</code> has the best ligatures for code.</li>
+    </ul>
+  </div>
+</body>
+</html>

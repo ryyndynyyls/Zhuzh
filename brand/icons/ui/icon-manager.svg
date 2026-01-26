@@ -1,0 +1,7 @@
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Person shifted right -->
+  <path d="M17 21V19C17 17.9391 16.5786 16.9217 15.8284 16.1716C15.0783 15.4214 14.0609 15 13 15H7C5.93913 15 4.92172 15.4214 4.17157 16.1716C3.42143 16.9217 3 17.9391 3 19V21" stroke="#33332F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="10" cy="7" r="4" stroke="#33332F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Sparkle Badge -->
+  <path d="M19 8C19 9.10457 18.1046 10 17 10C18.1046 10 19 10.8954 19 12C19 10.8954 19.8954 10 21 10C19.8954 10 19 9.10457 19 8Z" fill="#FFF845" stroke="#33332F" stroke-width="1.5" stroke-linejoin="round"/>
+</svg>

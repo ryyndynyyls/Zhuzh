@@ -1,0 +1,8 @@
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Inner Hole -->
+  <circle cx="12" cy="12" r="3" stroke="#33332F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Gear Body -->
+  <path d="M12 7C14.7614 7 17 9.23858 17 12C17 14.7614 14.7614 17 12 17C9.23858 17 7 14.7614 7 12C7 9.23858 9.23858 7 12 7Z" stroke="#33332F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- 6 Teeth -->
+  <path d="M12 3V7M12 17V21M16.33 4.5L14.5 7.67M9.5 16.33L7.67 19.5M19.5 16.33L16.33 14.5M7.67 9.5L4.5 7.67" stroke="#33332F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

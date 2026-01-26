@@ -1,0 +1,122 @@
+[
+  {
+    "id": 2342342,
+    "description": null,
+    "guid": "9050cef5-a547-4960-b021-aabe17d5a389",
+    "name": "Vacation",
+    "deleted_at": null,
+    "created_at": "2019-01-22T19:53:41Z",
+    "updated_at": "2019-01-22T19:53:41Z",
+    "type": "LeaveType",
+    "can_i": {
+      "view": true,
+      "edit": true,
+      "visit": true,
+      "assign": true,
+      "view_time_entries": true,
+      "edit_time_entries": true,
+      "view_expense_items": true,
+      "edit_expense_items": true
+    }
+  },
+  {
+    "id": 2342343,
+    "description": null,
+    "guid": "2e4b90f3-5cd8-4da1-bdcf-1108befde8c0",
+    "name": "Sick",
+    "deleted_at": null,
+    "created_at": "2019-01-22T19:53:41Z",
+    "updated_at": "2019-01-22T19:53:41Z",
+    "type": "LeaveType",
+    "can_i": {
+      "view": true,
+      "edit": true,
+      "visit": true,
+      "assign": true,
+      "view_time_entries": true,
+      "edit_time_entries": true,
+      "view_expense_items": true,
+      "edit_expense_items": true
+    }
+  },
+  {
+    "id": 2342344,
+    "description": null,
+    "guid": "aab5e1f6-bfc2-4442-a641-250c56e1a6bc",
+    "name": "Parental leave",
+    "deleted_at": null,
+    "created_at": "2019-01-22T19:53:41Z",
+    "updated_at": "2019-01-22T19:53:41Z",
+    "type": "LeaveType",
+    "can_i": {
+      "view": true,
+      "edit": true,
+      "visit": true,
+      "assign": true,
+      "view_time_entries": true,
+      "edit_time_entries": true,
+      "view_expense_items": true,
+      "edit_expense_items": true
+    }
+  },
+  {
+    "id": 2383200,
+    "description": null,
+    "guid": "89908822-8e7f-4455-ad41-fc49fa6f08e4",
+    "name": "Health / Wellness",
+    "deleted_at": null,
+    "created_at": "2019-02-08T01:45:46Z",
+    "updated_at": "2019-02-08T01:45:46Z",
+    "type": "LeaveType",
+    "can_i": {
+      "view": true,
+      "edit": true,
+      "visit": true,
+      "assign": true,
+      "view_time_entries": true,
+      "edit_time_entries": true,
+      "view_expense_items": true,
+      "edit_expense_items": true
+    }
+  },
+  {
+    "id": 2383201,
+    "description": null,
+    "guid": "26418f15-848a-4a95-80b1-189386119f92",
+    "name": "Holiday",
+    "deleted_at": null,
+    "created_at": "2019-02-08T01:45:58Z",
+    "updated_at": "2019-02-08T01:45:58Z",
+    "type": "LeaveType",
+    "can_i": {
+      "view": true,
+      "edit": true,
+      "visit": true,
+      "assign": true,
+      "view_time_entries": true,
+      "edit_time_entries": true,
+      "view_expense_items": true,
+      "edit_expense_items": true
+    }
+  },
+  {
+    "id": 3518910,
+    "description": null,
+    "guid": "0f61f5fc-262b-496b-9b4f-1db65c56baa3",
+    "name": "TRACKED IN MONDAY.COM",
+    "deleted_at": null,
+    "created_at": "2020-07-08T23:56:40Z",
+    "updated_at": "2020-07-08T23:56:40Z",
+    "type": "LeaveType",
+    "can_i": {
+      "view": true,
+      "edit": true,
+      "visit": true,
+      "assign": true,
+      "view_time_entries": true,
+      "edit_time_entries": true,
+      "view_expense_items": true,
+      "edit_expense_items": true
+    }
+  }
+]

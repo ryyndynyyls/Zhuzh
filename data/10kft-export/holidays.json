@@ -1,0 +1,212 @@
+[
+  {
+    "id": 48704,
+    "date": "2019-05-27",
+    "name": "Memorial day",
+    "created_at": "2019-02-08T01:47:29Z",
+    "updated_at": "2019-02-08T01:47:29Z"
+  },
+  {
+    "id": 48705,
+    "date": "2019-07-04",
+    "name": "4th of July",
+    "created_at": "2019-02-08T01:47:53Z",
+    "updated_at": "2019-02-08T01:47:53Z"
+  },
+  {
+    "id": 48706,
+    "date": "2019-09-02",
+    "name": "Labor Day",
+    "created_at": "2019-02-08T01:48:16Z",
+    "updated_at": "2019-02-08T01:48:16Z"
+  },
+  {
+    "id": 48707,
+    "date": "2019-11-28",
+    "name": "Thanksgiving",
+    "created_at": "2019-02-08T01:48:39Z",
+    "updated_at": "2019-02-08T01:48:39Z"
+  },
+  {
+    "id": 48708,
+    "date": "2019-11-29",
+    "name": "Thanksgiving",
+    "created_at": "2019-02-08T01:48:44Z",
+    "updated_at": "2019-02-08T01:48:44Z"
+  },
+  {
+    "id": 48709,
+    "date": "2019-12-24",
+    "name": "Christmas Eve",
+    "created_at": "2019-02-08T01:49:05Z",
+    "updated_at": "2019-02-08T01:49:05Z"
+  },
+  {
+    "id": 48710,
+    "date": "2019-12-25",
+    "name": "Christmas Day",
+    "created_at": "2019-02-08T01:49:11Z",
+    "updated_at": "2019-02-08T01:49:11Z"
+  },
+  {
+    "id": 48711,
+    "date": "2019-12-26",
+    "name": "Christmas Break",
+    "created_at": "2019-02-08T01:49:21Z",
+    "updated_at": "2019-02-08T01:49:21Z"
+  },
+  {
+    "id": 48712,
+    "date": "2019-12-27",
+    "name": "Christmas Break",
+    "created_at": "2019-02-08T01:49:36Z",
+    "updated_at": "2019-02-08T01:49:36Z"
+  },
+  {
+    "id": 48713,
+    "date": "2019-12-30",
+    "name": "Christmas Break",
+    "created_at": "2019-02-08T01:49:39Z",
+    "updated_at": "2019-02-08T01:49:39Z"
+  },
+  {
+    "id": 48715,
+    "date": "2019-12-31",
+    "name": "New Years Eve",
+    "created_at": "2019-02-08T01:49:46Z",
+    "updated_at": "2019-02-08T01:49:55Z"
+  },
+  {
+    "id": 48716,
+    "date": "2020-01-01",
+    "name": "New Years Day",
+    "created_at": "2019-02-08T01:50:01Z",
+    "updated_at": "2019-02-08T01:50:01Z"
+  },
+  {
+    "id": 105912,
+    "date": "2023-09-04",
+    "name": "Labor Day",
+    "created_at": "2023-08-23T18:33:03Z",
+    "updated_at": "2023-08-23T18:33:03Z"
+  },
+  {
+    "id": 105913,
+    "date": "2023-11-23",
+    "name": "Thanksgiving",
+    "created_at": "2023-08-23T18:33:16Z",
+    "updated_at": "2023-08-23T18:33:16Z"
+  },
+  {
+    "id": 105914,
+    "date": "2023-11-24",
+    "name": "Day After Thanksgiving",
+    "created_at": "2023-08-23T18:33:24Z",
+    "updated_at": "2023-08-23T18:33:24Z"
+  },
+  {
+    "id": 112128,
+    "date": "2023-12-25",
+    "name": "Xmas-NYE",
+    "created_at": "2023-12-19T18:25:54Z",
+    "updated_at": "2023-12-19T18:25:54Z"
+  },
+  {
+    "id": 112129,
+    "date": "2023-12-26",
+    "name": "Xmas-NYE",
+    "created_at": "2023-12-19T18:25:57Z",
+    "updated_at": "2023-12-19T18:25:57Z"
+  },
+  {
+    "id": 112130,
+    "date": "2023-12-27",
+    "name": "Xmas-NYE",
+    "created_at": "2023-12-19T18:26:01Z",
+    "updated_at": "2023-12-19T18:26:01Z"
+  },
+  {
+    "id": 112131,
+    "date": "2023-12-28",
+    "name": "Xmas-NYE",
+    "created_at": "2023-12-19T18:26:04Z",
+    "updated_at": "2023-12-19T18:26:04Z"
+  },
+  {
+    "id": 112133,
+    "date": "2023-12-29",
+    "name": "Xmas-NYE",
+    "created_at": "2023-12-19T18:26:14Z",
+    "updated_at": "2023-12-19T18:26:14Z"
+  },
+  {
+    "id": 112127,
+    "date": "2024-01-01",
+    "name": "New Years Day",
+    "created_at": "2023-12-19T18:25:29Z",
+    "updated_at": "2023-12-19T18:25:29Z"
+  },
+  {
+    "id": 112134,
+    "date": "2024-01-15",
+    "name": "MLK day",
+    "created_at": "2023-12-19T18:30:11Z",
+    "updated_at": "2023-12-19T18:30:11Z"
+  },
+  {
+    "id": 132817,
+    "date": "2025-12-24",
+    "name": "Xmas-NYE",
+    "created_at": "2025-12-03T17:47:00Z",
+    "updated_at": "2025-12-03T17:47:00Z"
+  },
+  {
+    "id": 132818,
+    "date": "2025-12-25",
+    "name": "Xmas-NYE",
+    "created_at": "2025-12-03T17:47:07Z",
+    "updated_at": "2025-12-03T17:47:07Z"
+  },
+  {
+    "id": 132819,
+    "date": "2025-12-26",
+    "name": "Xmas-NYE",
+    "created_at": "2025-12-03T17:47:12Z",
+    "updated_at": "2025-12-03T17:47:12Z"
+  },
+  {
+    "id": 132820,
+    "date": "2025-12-29",
+    "name": "Xmas-NYE",
+    "created_at": "2025-12-03T17:47:16Z",
+    "updated_at": "2025-12-03T17:47:16Z"
+  },
+  {
+    "id": 132821,
+    "date": "2025-12-30",
+    "name": "Xmas-NYE",
+    "created_at": "2025-12-03T17:47:20Z",
+    "updated_at": "2025-12-03T17:47:20Z"
+  },
+  {
+    "id": 132822,
+    "date": "2025-12-31",
+    "name": "Xmas-NYE",
+    "created_at": "2025-12-03T17:47:24Z",
+    "updated_at": "2025-12-03T17:47:24Z"
+  },
+  {
+    "id": 132823,
+    "date": "2026-01-01",
+    "name": "Xmas-NYE",
+    "created_at": "2025-12-03T17:47:27Z",
+    "updated_at": "2025-12-03T17:47:27Z"
+  },
+  {
+    "id": 132824,
+    "date": "2026-01-02",
+    "name": "Xmas-NYE",
+    "created_at": "2025-12-03T17:47:32Z",
+    "updated_at": "2025-12-03T17:47:32Z"
+  }
+]

@@ -1,0 +1,92 @@
+/**
+ * Zhuzh Sparkle Animations
+ * 
+ * CSS keyframe animations for the Zhuzh brand.
+ * Import this file in main.tsx or include in global styles.
+ */
+
+/* ============================================
+   LOADING PULSE
+   Use on a sparkle SVG while waiting for response
+   ============================================ */
+@keyframes zhuzh-pulse {
+  0%, 100% {
+    transform: scale(0.8) rotate(0deg);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.2) rotate(45deg);
+    opacity: 1;
+  }
+}
+
+.zhuzh-loading-sparkle {
+  fill: #FF8731;
+  animation: zhuzh-pulse 1000ms ease-in-out infinite;
+  transform-origin: center;
+}
+
+/* ============================================
+   HOVER MICRO
+   Tiny sparkle appears on hover
+   ============================================ */
+@keyframes zhuzh-hover-in {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+}
+
+.zhuzh-hover-sparkle {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 12px;
+  height: 12px;
+  fill: #FFF845;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.zhuzh-hoverable:hover .zhuzh-hover-sparkle {
+  animation: zhuzh-hover-in 300ms ease forwards;
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+
+/* Apply to any element to add hover sparkle */
+.zhuzh-hoverable {
+  position: relative;
+}
+
+/* Loading state wrapper */
+.zhuzh-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.zhuzh-loading svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* ============================================
+   SPARKLE SVG INLINE (for reference)
+   ============================================ */
+/*
+<svg class="zhuzh-loading-sparkle" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <path d="M12 2C12 7.52285 7.52285 12 2 12C7.52285 12 12 16.4772 12 22C12 16.4772 16.4772 12 22 12C16.4772 12 12 7.52285 12 2Z" fill="currentColor"/>
+</svg>
+*/

@@ -1,0 +1,56 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1200" height="630" fill="#FF8731"/>
+  
+  <!-- Zhuzh wordmark - using system font, replace with actual paths if needed -->
+  <text 
+    x="600" 
+    y="290" 
+    font-family="Inter, -apple-system, BlinkMacSystemFont, sans-serif" 
+    font-size="140" 
+    font-weight="700" 
+    fill="#33332F" 
+    text-anchor="middle"
+    letter-spacing="-4"
+  >Zhuzh</text>
+  
+  <!-- Sparkle - 4-point star -->
+  <g transform="translate(820, 180)">
+    <path 
+      d="M24 0 L28 20 L48 24 L28 28 L24 48 L20 28 L0 24 L20 20 Z" 
+      fill="#FFF845"
+    />
+  </g>
+  
+  <!-- Small accent sparkles -->
+  <g transform="translate(340, 200) scale(0.4)">
+    <path d="M24 0 L28 20 L48 24 L28 28 L24 48 L20 28 L0 24 L20 20 Z" fill="#80FF9C" opacity="0.8"/>
+  </g>
+  <g transform="translate(880, 380) scale(0.3)">
+    <path d="M24 0 L28 20 L48 24 L28 28 L24 48 L20 28 L0 24 L20 20 Z" fill="#FFF845" opacity="0.6"/>
+  </g>
+  
+  <!-- Tagline -->
+  <text 
+    x="600" 
+    y="370" 
+    font-family="Inter, -apple-system, BlinkMacSystemFont, sans-serif" 
+    font-size="32" 
+    font-weight="500" 
+    fill="#33332F" 
+    text-anchor="middle"
+    opacity="0.8"
+  >Confirmation over tracking ✨</text>
+  
+  <!-- URL hint -->
+  <text 
+    x="600" 
+    y="580" 
+    font-family="Inter, -apple-system, BlinkMacSystemFont, sans-serif" 
+    font-size="20" 
+    font-weight="400" 
+    fill="#33332F" 
+    text-anchor="middle"
+    opacity="0.5"
+  >zhuzh.app</text>
+</svg>

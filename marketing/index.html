@@ -1,0 +1,1836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zhuzh — Time Tracking That Respects Your Team</title>
+  <meta name="description" content="Stop tracking time. Start confirming it. Zhuzh replaces clunky time tracking with a simple Friday check-in in Slack.">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Zhuzh — Time Tracking That Respects Your Team">
+  <meta property="og:description" content="Stop tracking time. Start confirming it. Your team confirms their planned hours in Slack — no timers, no surveillance, no forgotten entries.">
+  <meta property="og:type" content="website">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Brand Tokens -->
+  <link rel="stylesheet" href="zhuzh-tokens.css">
+
+  <style>
+    /* ==========================================================================
+       GLOBAL STYLES & RESETS
+       ========================================================================== */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: var(--zhuzh-cream);
+      color: var(--zhuzh-dark);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    img {
+      max-width: 100%;
+      height: auto;
+    }
+
+    /* ==========================================================================
+       HERO SECTION
+       ========================================================================== */
+    .hero {
+      position: relative;
+      background-color: var(--zhuzh-cream);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 24px;
+      overflow: hidden;
+    }
+
+    .hero-container {
+      position: relative;
+      z-index: 2;
+      max-width: 800px;
+      margin: 0 auto;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .hero-logo {
+      max-width: 200px;
+      width: 100%;
+      height: auto;
+      margin-bottom: 48px;
+      animation: hero-float 3s ease-in-out infinite;
+    }
+
+    @keyframes hero-float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    .hero-headline {
+      font-size: clamp(32px, 6vw, 64px);
+      font-weight: 800;
+      line-height: 1.1;
+      color: var(--zhuzh-dark);
+      margin: 0 0 32px 0;
+      letter-spacing: -0.02em;
+    }
+
+    .hero-headline-highlight {
+      position: relative;
+      display: inline-block;
+    }
+
+    .hero-headline-highlight::after {
+      content: '';
+      position: absolute;
+      bottom: 4px;
+      left: -4px;
+      right: -4px;
+      height: 0.3em;
+      background-color: var(--zhuzh-yellow);
+      z-index: -1;
+      border-radius: 4px;
+      transform: skewX(-2deg);
+    }
+
+    .hero-subheadline {
+      font-size: clamp(16px, 2.5vw, 20px);
+      font-weight: 400;
+      line-height: 1.6;
+      color: var(--zhuzh-dark);
+      opacity: 0.85;
+      max-width: 600px;
+      margin: 0 0 40px 0;
+    }
+
+    .hero-cta {
+      display: inline-block;
+      font-size: 18px;
+      font-weight: 600;
+      color: white;
+      background-color: var(--zhuzh-orange);
+      padding: 18px 40px;
+      border-radius: 50px;
+      text-decoration: none;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 20px rgba(255, 135, 49, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-cta::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.5s ease;
+    }
+
+    .hero-cta:hover {
+      transform: scale(1.05);
+      box-shadow: 0 8px 30px rgba(255, 135, 49, 0.5);
+    }
+
+    .hero-cta:hover::before {
+      left: 100%;
+    }
+
+    .hero-byline {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--zhuzh-dark);
+      opacity: 0.5;
+      margin: 24px 0 0 0;
+      letter-spacing: 0.02em;
+    }
+
+    /* Hero Sparkles */
+    .hero-sparkle {
+      position: absolute;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .hero-sparkle::before,
+    .hero-sparkle::after {
+      content: '';
+      position: absolute;
+      background-color: var(--zhuzh-yellow);
+    }
+
+    .hero-sparkle::before {
+      width: 4px;
+      height: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border-radius: 2px;
+    }
+
+    .hero-sparkle::after {
+      width: 100%;
+      height: 4px;
+      top: 50%;
+      transform: translateY(-50%);
+      border-radius: 2px;
+    }
+
+    .hero-sparkle--1 {
+      width: 40px;
+      height: 40px;
+      top: 15%;
+      right: 12%;
+      animation: sparkle-pulse 2s ease-in-out infinite;
+    }
+    .hero-sparkle--1::before, .hero-sparkle--1::after { background-color: var(--zhuzh-orange); }
+
+    .hero-sparkle--2 {
+      width: 24px;
+      height: 24px;
+      top: 20%;
+      left: 15%;
+      animation: sparkle-pulse 2.5s ease-in-out infinite 0.3s;
+    }
+
+    .hero-sparkle--3 {
+      width: 32px;
+      height: 32px;
+      bottom: 25%;
+      right: 18%;
+      animation: sparkle-pulse 2.2s ease-in-out infinite 0.6s;
+    }
+    .hero-sparkle--3::before, .hero-sparkle--3::after { background-color: var(--zhuzh-lime); }
+
+    .hero-sparkle--4 {
+      width: 20px;
+      height: 20px;
+      bottom: 30%;
+      left: 10%;
+      animation: sparkle-pulse 2.8s ease-in-out infinite 0.9s;
+    }
+    .hero-sparkle--4::before, .hero-sparkle--4::after { background-color: var(--zhuzh-orange); }
+
+    .hero-sparkle--5 {
+      width: 16px;
+      height: 16px;
+      top: 45%;
+      right: 8%;
+      animation: sparkle-pulse 3s ease-in-out infinite 1.2s;
+    }
+
+    @keyframes sparkle-pulse {
+      0%, 100% { opacity: 0.6; transform: scale(1) rotate(0deg); }
+      50% { opacity: 1; transform: scale(1.2) rotate(45deg); }
+    }
+
+    /* ==========================================================================
+       PROBLEM SECTION
+       ========================================================================== */
+    .problem-section {
+      background-color: var(--zhuzh-surface-elevated);
+      padding: 80px 24px;
+      position: relative;
+    }
+
+    .problem-section::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 4px;
+      background: linear-gradient(90deg, var(--zhuzh-orange), var(--zhuzh-yellow));
+      border-radius: 2px;
+    }
+
+    .problem-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .problem-headline {
+      text-align: center;
+      margin-bottom: 64px;
+    }
+
+    .problem-headline h2 {
+      font-size: clamp(2rem, 5vw, 3rem);
+      font-weight: 700;
+      color: var(--zhuzh-dark);
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+    }
+
+    .problem-headline h2 span {
+      background: linear-gradient(135deg, var(--zhuzh-orange) 0%, #ff6b1a 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .problem-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 32px;
+      margin-bottom: 64px;
+    }
+
+    .problem-card {
+      background: var(--zhuzh-surface-elevated);
+      border-radius: 16px;
+      padding: 32px;
+      box-shadow: 0 2px 4px rgba(51, 51, 47, 0.08);
+      border: 1px solid rgba(51, 51, 47, 0.06);
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .problem-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 24px rgba(51, 51, 47, 0.12);
+    }
+
+    .problem-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: var(--zhuzh-orange);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .problem-card:hover::before {
+      opacity: 1;
+    }
+
+    .problem-card-icon {
+      width: 64px;
+      height: 64px;
+      background: linear-gradient(135deg, rgba(255, 135, 49, 0.12) 0%, rgba(255, 248, 69, 0.12) 100%);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 24px;
+      font-size: 28px;
+      border: 2px solid rgba(255, 135, 49, 0.2);
+    }
+
+    .problem-card-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--zhuzh-dark);
+      margin-bottom: 12px;
+      letter-spacing: -0.01em;
+    }
+
+    .problem-card-text {
+      font-size: 1rem;
+      color: rgba(51, 51, 47, 0.7);
+      line-height: 1.7;
+    }
+
+    .problem-card-text strong {
+      color: var(--zhuzh-dark);
+      font-weight: 500;
+    }
+
+    .problem-transition {
+      text-align: center;
+      max-width: 640px;
+      margin: 0 auto;
+      padding-top: 32px;
+      border-top: 1px solid rgba(51, 51, 47, 0.08);
+    }
+
+    .problem-transition p {
+      font-size: clamp(1.25rem, 3vw, 1.5rem);
+      font-weight: 500;
+      color: var(--zhuzh-dark);
+      letter-spacing: -0.01em;
+      position: relative;
+      display: inline-block;
+    }
+
+    .problem-transition p::after {
+      content: '';
+      position: absolute;
+      bottom: -8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 48px;
+      height: 3px;
+      background: var(--zhuzh-lime);
+      border-radius: 2px;
+    }
+
+    /* ==========================================================================
+       SOLUTION SECTION
+       ========================================================================== */
+    .solution-section {
+      background-color: var(--zhuzh-cream);
+      padding: 80px 24px 100px;
+      overflow: hidden;
+    }
+
+    .solution-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .solution-header {
+      text-align: center;
+      margin-bottom: 64px;
+    }
+
+    .solution-headline {
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 800;
+      color: var(--zhuzh-dark);
+      margin: 0 0 16px;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+    }
+
+    .solution-tagline {
+      font-size: clamp(1.125rem, 2vw, 1.375rem);
+      font-weight: 500;
+      color: var(--zhuzh-dark);
+      opacity: 0.7;
+      margin: 0;
+    }
+
+    .solution-steps {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 24px;
+      margin-bottom: 64px;
+      position: relative;
+    }
+
+    .solution-step {
+      flex: 1;
+      max-width: 320px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .solution-step--featured {
+      max-width: 400px;
+      flex: 1.3;
+    }
+
+    .solution-step__number {
+      width: 48px;
+      height: 48px;
+      background-color: var(--zhuzh-orange);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 12px rgba(255, 135, 49, 0.3);
+      position: relative;
+      z-index: 2;
+    }
+
+    .solution-step__content {
+      text-align: center;
+      padding: 0 16px;
+    }
+
+    .solution-step__icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 20px;
+      color: var(--zhuzh-dark);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .solution-step__title {
+      font-size: 1.375rem;
+      font-weight: 700;
+      color: var(--zhuzh-dark);
+      margin: 0 0 12px;
+      letter-spacing: -0.01em;
+    }
+
+    .solution-step__description {
+      font-size: 1rem;
+      line-height: 1.6;
+      color: var(--zhuzh-dark);
+      opacity: 0.75;
+      margin: 0;
+    }
+
+    .solution-connector {
+      position: absolute;
+      width: 80px;
+      height: 40px;
+      top: 24px;
+      right: -52px;
+      z-index: 1;
+    }
+
+    /* Slack DM Mockup */
+    .solution-slack-mockup {
+      margin-top: 28px;
+      position: relative;
+      width: 100%;
+      max-width: 380px;
+    }
+
+    .solution-slack__container {
+      background: white;
+      border-radius: 12px;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 8px 24px rgba(0, 0, 0, 0.08), 0 24px 48px rgba(0, 0, 0, 0.04);
+      overflow: hidden;
+      position: relative;
+      z-index: 2;
+    }
+
+    .solution-slack__header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 16px 0;
+    }
+
+    .solution-slack__avatar-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--zhuzh-orange), #ff6b00);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 4px rgba(255, 135, 49, 0.3);
+      color: white;
+      font-weight: 700;
+      font-size: 16px;
+    }
+
+    .solution-slack__meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .solution-slack__bot-name {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      color: var(--zhuzh-dark);
+    }
+
+    .solution-slack__app-badge {
+      font-size: 0.625rem;
+      font-weight: 600;
+      color: white;
+      background: #1264a3;
+      padding: 2px 5px;
+      border-radius: 3px;
+      letter-spacing: 0.02em;
+    }
+
+    .solution-slack__time {
+      font-size: 0.75rem;
+      color: #616061;
+    }
+
+    .solution-slack__body {
+      padding: 12px 16px 16px;
+    }
+
+    .solution-slack__greeting {
+      font-size: 0.9375rem;
+      color: var(--zhuzh-dark);
+      margin: 0 0 16px;
+      line-height: 1.5;
+    }
+
+    .solution-slack__table {
+      background: #f8f8f8;
+      border-radius: 8px;
+      border: 1px solid #e8e8e8;
+      padding: 4px 0;
+      margin-bottom: 16px;
+    }
+
+    .solution-slack__row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 14px;
+      font-size: 0.875rem;
+    }
+
+    .solution-slack__row:not(:last-child):not(.solution-slack__row--total) {
+      border-bottom: 1px solid #e8e8e8;
+    }
+
+    .solution-slack__project {
+      color: var(--zhuzh-dark);
+      font-weight: 500;
+    }
+
+    .solution-slack__hours {
+      color: #616061;
+      font-weight: 500;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .solution-slack__divider {
+      height: 1px;
+      background: #d1d1d1;
+      margin: 4px 14px;
+    }
+
+    .solution-slack__row--total .solution-slack__project,
+    .solution-slack__row--total .solution-slack__hours {
+      font-weight: 700;
+      color: var(--zhuzh-dark);
+    }
+
+    .solution-slack__actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .solution-slack__btn {
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      border: 1px solid transparent;
+    }
+
+    .solution-slack__btn--primary {
+      background: linear-gradient(180deg, #2eb67d 0%, #259c6c 100%);
+      color: white;
+      border-color: #22915f;
+      box-shadow: 0 1px 3px rgba(46, 182, 125, 0.3);
+    }
+
+    .solution-slack__btn--secondary {
+      background: white;
+      color: var(--zhuzh-dark);
+      border-color: #d1d1d1;
+    }
+
+    .solution-slack__glow {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 120%;
+      height: 120%;
+      background: radial-gradient(ellipse at center, rgba(128, 255, 156, 0.15) 0%, transparent 70%);
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    /* Callout */
+    .solution-callout {
+      display: flex;
+      justify-content: center;
+      margin-top: 24px;
+    }
+
+    .solution-callout__inner {
+      background: linear-gradient(135deg, var(--zhuzh-yellow) 0%, #ffe94a 100%);
+      padding: 24px 40px;
+      border-radius: 16px;
+      display: inline-flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 4px 12px rgba(255, 248, 69, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+      border: 2px solid rgba(255, 135, 49, 0.2);
+    }
+
+    .solution-callout__stat {
+      font-size: clamp(2.5rem, 5vw, 3.5rem);
+      font-weight: 800;
+      color: var(--zhuzh-dark);
+      letter-spacing: -0.02em;
+      line-height: 1;
+    }
+
+    .solution-callout__text {
+      font-size: clamp(1rem, 2vw, 1.25rem);
+      font-weight: 600;
+      color: var(--zhuzh-dark);
+      max-width: 280px;
+      line-height: 1.4;
+    }
+
+    /* ==========================================================================
+       FEATURES SECTION
+       ========================================================================== */
+    .features-section {
+      background-color: var(--zhuzh-surface-elevated);
+      padding: 80px 24px;
+    }
+
+    .features-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .features-headline {
+      font-size: clamp(2rem, 5vw, 3rem);
+      font-weight: 700;
+      color: var(--zhuzh-dark);
+      text-align: center;
+      margin: 0 0 60px 0;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+    }
+
+    .features-card {
+      background-color: var(--zhuzh-cream);
+      border-radius: 16px;
+      padding: 32px 28px;
+      box-shadow: 0 1px 3px rgba(51, 51, 47, 0.08), 0 4px 12px rgba(51, 51, 47, 0.04);
+      transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .features-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 4px 8px rgba(51, 51, 47, 0.1), 0 12px 32px rgba(51, 51, 47, 0.08);
+    }
+
+    .features-card-icon {
+      font-size: 48px;
+      line-height: 1;
+      margin-bottom: 20px;
+      display: block;
+    }
+
+    .features-card-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--zhuzh-dark);
+      margin: 0 0 12px 0;
+      letter-spacing: -0.01em;
+    }
+
+    .features-card-description {
+      font-size: 0.95rem;
+      line-height: 1.6;
+      color: rgba(51, 51, 47, 0.75);
+      margin: 0;
+    }
+
+    .features-card--highlight {
+      background: linear-gradient(135deg, rgba(255, 135, 49, 0.08) 0%, rgba(255, 248, 69, 0.06) 100%);
+      border: 2px solid var(--zhuzh-orange);
+    }
+
+    .features-card--highlight::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--zhuzh-orange) 0%, var(--zhuzh-yellow) 50%, var(--zhuzh-lime) 100%);
+    }
+
+    .features-card--highlight:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 4px 12px rgba(255, 135, 49, 0.2), 0 16px 40px rgba(255, 135, 49, 0.15);
+    }
+
+    .features-card-badge {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: var(--zhuzh-orange);
+      color: white;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 4px 10px;
+      border-radius: 100px;
+    }
+
+    /* ==========================================================================
+       TRUST SECTION
+       ========================================================================== */
+    .trust-section {
+      background-color: var(--zhuzh-cream);
+      padding: 100px 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .trust-container {
+      max-width: 800px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .trust-headline {
+      font-size: clamp(2rem, 5vw, 3rem);
+      font-weight: 800;
+      color: var(--zhuzh-dark);
+      margin-bottom: 40px;
+      line-height: 1.2;
+    }
+
+    .trust-content {
+      margin-bottom: 48px;
+    }
+
+    .trust-paragraph {
+      font-size: 1.125rem;
+      color: #555550;
+      margin-bottom: 24px;
+      line-height: 1.8;
+    }
+
+    .trust-blockquote {
+      position: relative;
+      margin: 56px auto 0;
+      padding: 40px 48px;
+      background: white;
+      border-radius: 20px;
+      max-width: 600px;
+      box-shadow: 0 4px 24px rgba(51, 51, 47, 0.06);
+    }
+
+    .trust-blockquote::before {
+      content: '"';
+      position: absolute;
+      top: -20px;
+      left: 32px;
+      font-size: 6rem;
+      font-weight: 800;
+      color: var(--zhuzh-orange);
+      opacity: 0.3;
+      line-height: 1;
+      font-family: Georgia, serif;
+    }
+
+    .trust-quote-text {
+      font-size: 1.25rem;
+      font-weight: 500;
+      color: var(--zhuzh-dark);
+      font-style: italic;
+      margin-bottom: 16px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .trust-quote-author {
+      font-size: 0.875rem;
+      color: #888883;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-style: normal;
+    }
+
+    /* ==========================================================================
+       PILOT CTA SECTION
+       ========================================================================== */
+    .pilot-section {
+      background: linear-gradient(180deg, #FFFFFF 0%, #FAFAF5 100%);
+      padding: 100px 24px 120px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .pilot-sparkle {
+      position: absolute;
+      pointer-events: none;
+    }
+
+    .pilot-sparkle--1 {
+      top: 80px;
+      left: 8%;
+      width: 24px;
+      height: 24px;
+      background: var(--zhuzh-yellow);
+      clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+      animation: pilot-sparkle-pulse 3s ease-in-out infinite;
+    }
+
+    .pilot-sparkle--2 {
+      top: 200px;
+      right: 10%;
+      width: 32px;
+      height: 32px;
+      background: var(--zhuzh-lime);
+      clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+      animation: pilot-sparkle-pulse 3s ease-in-out infinite 0.5s;
+    }
+
+    .pilot-sparkle--3 {
+      bottom: 150px;
+      left: 5%;
+      width: 20px;
+      height: 20px;
+      background: var(--zhuzh-orange);
+      clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+      animation: pilot-sparkle-pulse 3s ease-in-out infinite 1s;
+    }
+
+    .pilot-sparkle--4 {
+      bottom: 200px;
+      right: 6%;
+      width: 28px;
+      height: 28px;
+      background: var(--zhuzh-yellow);
+      clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+      animation: pilot-sparkle-pulse 3s ease-in-out infinite 1.5s;
+    }
+
+    @keyframes pilot-sparkle-pulse {
+      0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.7; }
+      50% { transform: scale(1.2) rotate(15deg); opacity: 1; }
+    }
+
+    .pilot-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      align-items: start;
+      position: relative;
+      z-index: 1;
+    }
+
+    .pilot-content {
+      padding-top: 20px;
+    }
+
+    .pilot-headline {
+      font-size: clamp(2rem, 4vw, 2.75rem);
+      font-weight: 800;
+      color: var(--zhuzh-dark);
+      margin-bottom: 24px;
+      line-height: 1.2;
+    }
+
+    .pilot-headline::after {
+      content: '';
+      display: block;
+      width: 80px;
+      height: 4px;
+      background: linear-gradient(90deg, var(--zhuzh-orange), var(--zhuzh-yellow));
+      border-radius: 2px;
+      margin-top: 20px;
+    }
+
+    .pilot-body {
+      font-size: 1.125rem;
+      color: #555550;
+      line-height: 1.8;
+      margin-bottom: 36px;
+    }
+
+    .pilot-benefits {
+      list-style: none;
+    }
+
+    .pilot-benefit {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 12px 0;
+      font-size: 1.0625rem;
+      color: var(--zhuzh-dark);
+    }
+
+    .pilot-benefit-icon {
+      flex-shrink: 0;
+      width: 28px;
+      height: 28px;
+      background: var(--zhuzh-lime);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 2px;
+    }
+
+    .pilot-benefit-icon svg {
+      width: 16px;
+      height: 16px;
+      stroke: var(--zhuzh-dark);
+      stroke-width: 3;
+    }
+
+    .pilot-form-wrapper {
+      background: white;
+      border-radius: 24px;
+      padding: 40px;
+      box-shadow: 0 4px 6px rgba(51, 51, 47, 0.02), 0 12px 24px rgba(51, 51, 47, 0.06), 0 24px 48px rgba(51, 51, 47, 0.04);
+      border: 1px solid rgba(224, 223, 211, 0.5);
+    }
+
+    .pilot-form {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .pilot-form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .pilot-form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .pilot-label {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--zhuzh-dark);
+    }
+
+    .pilot-label-optional {
+      font-weight: 400;
+      color: #888883;
+      margin-left: 4px;
+    }
+
+    .pilot-input,
+    .pilot-select,
+    .pilot-textarea {
+      width: 100%;
+      padding: 16px 20px;
+      font-size: 1rem;
+      font-family: 'Inter', sans-serif;
+      color: var(--zhuzh-dark);
+      background: #FAFAF5;
+      border: 1px solid #E0DFD3;
+      border-radius: 12px;
+      transition: all 0.2s ease;
+    }
+
+    .pilot-input::placeholder,
+    .pilot-textarea::placeholder {
+      color: #AAAAAA;
+    }
+
+    .pilot-input:focus,
+    .pilot-select:focus,
+    .pilot-textarea:focus {
+      outline: none;
+      border-color: var(--zhuzh-orange);
+      box-shadow: 0 0 0 4px rgba(255, 135, 49, 0.12);
+      background: white;
+    }
+
+    .pilot-select {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%2333332F' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 20px center;
+      padding-right: 48px;
+      cursor: pointer;
+    }
+
+    .pilot-textarea {
+      min-height: 120px;
+      resize: vertical;
+      line-height: 1.6;
+    }
+
+    .pilot-submit {
+      width: 100%;
+      padding: 20px 32px;
+      font-size: 1.125rem;
+      font-weight: 700;
+      font-family: 'Inter', sans-serif;
+      color: white;
+      background: var(--zhuzh-orange);
+      border: none;
+      border-radius: 100px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-top: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .pilot-submit:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(255, 135, 49, 0.4), 0 0 0 4px rgba(255, 135, 49, 0.15);
+    }
+
+    .pilot-note {
+      text-align: center;
+      font-size: 0.875rem;
+      color: #888883;
+      margin-top: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    /* ==========================================================================
+       FOOTER
+       ========================================================================== */
+    .footer {
+      background-color: var(--zhuzh-dark);
+      color: var(--zhuzh-cream);
+      padding: 48px 24px;
+    }
+
+    .footer-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 24px;
+    }
+
+    .footer-left {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .footer-logo {
+      max-width: 120px;
+      filter: brightness(0) invert(1);
+    }
+
+    .footer-tagline {
+      font-size: 0.875rem;
+      opacity: 0.7;
+    }
+
+    .footer-right {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+    }
+
+    .footer-link {
+      color: var(--zhuzh-cream);
+      text-decoration: none;
+      font-size: 0.875rem;
+      opacity: 0.7;
+      transition: opacity 0.2s ease;
+    }
+
+    .footer-link:hover {
+      opacity: 1;
+    }
+
+    .footer-made {
+      font-size: 0.875rem;
+      opacity: 0.7;
+    }
+
+    /* ==========================================================================
+       SCROLL ANIMATIONS
+       ========================================================================== */
+    .animate-on-scroll {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+
+    .animate-on-scroll.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ==========================================================================
+       RESPONSIVE STYLES
+       ========================================================================== */
+    @media (min-width: 900px) {
+      .features-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 32px;
+      }
+    }
+
+    @media (max-width: 1024px) {
+      .solution-steps {
+        flex-direction: column;
+        align-items: center;
+        gap: 48px;
+      }
+
+      .solution-step {
+        max-width: 400px;
+        width: 100%;
+      }
+
+      .solution-connector {
+        display: none;
+      }
+    }
+
+    @media (max-width: 968px) {
+      .problem-cards {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 24px;
+      }
+
+      .problem-card:last-child {
+        grid-column: span 2;
+        max-width: 400px;
+        margin: 0 auto;
+      }
+
+      .pilot-container {
+        grid-template-columns: 1fr;
+        gap: 48px;
+        max-width: 600px;
+      }
+
+      .pilot-content {
+        text-align: center;
+        padding-top: 0;
+      }
+
+      .pilot-headline::after {
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .pilot-benefits {
+        display: inline-block;
+        text-align: left;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .hero {
+        padding: 60px 20px;
+        min-height: auto;
+        padding-top: 100px;
+        padding-bottom: 100px;
+      }
+
+      .hero-logo {
+        max-width: 160px;
+        margin-bottom: 36px;
+      }
+
+      .hero-cta {
+        font-size: 16px;
+        padding: 16px 32px;
+        width: 100%;
+        max-width: 300px;
+      }
+
+      .hero-sparkle--5 {
+        display: none;
+      }
+
+      .footer-container {
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .footer-right {
+        flex-direction: column;
+        gap: 16px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .problem-section {
+        padding: 64px 20px;
+      }
+
+      .problem-cards {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+
+      .problem-card {
+        padding: 28px 24px;
+      }
+
+      .problem-card:last-child {
+        grid-column: span 1;
+        max-width: none;
+      }
+
+      .solution-section {
+        padding: 60px 16px 80px;
+      }
+
+      .solution-slack__actions {
+        flex-direction: column;
+      }
+
+      .solution-slack__btn {
+        width: 100%;
+        text-align: center;
+      }
+
+      .solution-callout__inner {
+        flex-direction: column;
+        text-align: center;
+        padding: 24px 32px;
+        gap: 8px;
+      }
+
+      .features-section {
+        padding: 60px 16px;
+      }
+
+      .features-headline {
+        margin-bottom: 40px;
+      }
+
+      .features-card {
+        padding: 24px 20px;
+      }
+
+      .features-card-icon {
+        font-size: 40px;
+        margin-bottom: 16px;
+      }
+
+      .trust-section {
+        padding: 80px 20px;
+      }
+
+      .trust-blockquote {
+        padding: 32px 28px;
+        margin-top: 40px;
+      }
+
+      .pilot-section {
+        padding: 80px 20px 100px;
+      }
+
+      .pilot-form-wrapper {
+        padding: 28px 24px;
+      }
+
+      .pilot-form-row {
+        grid-template-columns: 1fr;
+      }
+
+      .pilot-sparkle {
+        display: none;
+      }
+    }
+
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      html {
+        scroll-behavior: auto;
+      }
+
+      .hero-logo,
+      .hero-sparkle,
+      .pilot-sparkle,
+      .animate-on-scroll {
+        animation: none;
+        transition: none;
+      }
+
+      .animate-on-scroll {
+        opacity: 1;
+        transform: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- =============================================
+       HERO SECTION
+  ============================================= -->
+  <section id="hero" class="hero">
+    <div class="hero-sparkle hero-sparkle--1"></div>
+    <div class="hero-sparkle hero-sparkle--2"></div>
+    <div class="hero-sparkle hero-sparkle--3"></div>
+    <div class="hero-sparkle hero-sparkle--4"></div>
+    <div class="hero-sparkle hero-sparkle--5"></div>
+
+    <div class="hero-container">
+      <img src="assets/zhuzh-wordmark-sparkle.png" alt="Zhuzh" class="hero-logo">
+
+      <h1 class="hero-headline">
+        Stop tracking time.<br>
+        <span class="hero-headline-highlight">Start confirming it.</span>
+      </h1>
+
+      <p class="hero-subheadline">
+        Zhuzh replaces clunky time tracking with a simple Friday check-in. Your team confirms their planned hours in Slack — no timers, no surveillance, no forgotten entries.
+      </p>
+
+      <a href="#pilot" class="hero-cta">Join the pilot program</a>
+
+      <p class="hero-byline">Built by Use All Five for creative teams like yours</p>
+    </div>
+  </section>
+
+  <!-- =============================================
+       PROBLEM SECTION
+  ============================================= -->
+  <section id="problem" class="problem-section">
+    <div class="problem-container">
+      <header class="problem-headline animate-on-scroll">
+        <h2>Here's why your time data is <span>garbage</span></h2>
+      </header>
+
+      <div class="problem-cards">
+        <article class="problem-card animate-on-scroll">
+          <div class="problem-card-icon" aria-hidden="true">🧠</div>
+          <h3 class="problem-card-title">Nobody remembers to log time</h3>
+          <p class="problem-card-text">Timers get forgotten. End-of-week entry becomes guesswork. The data you're paying for is <strong>fiction</strong>.</p>
+        </article>
+
+        <article class="problem-card animate-on-scroll">
+          <div class="problem-card-icon" aria-hidden="true">👁️</div>
+          <h3 class="problem-card-title">Your tools feel like surveillance</h3>
+          <p class="problem-card-text">Screenshot monitoring. Idle detection. Your team feels watched, not trusted. <strong>Morale suffers</strong>.</p>
+        </article>
+
+        <article class="problem-card animate-on-scroll">
+          <div class="problem-card-icon" aria-hidden="true">💸</div>
+          <h3 class="problem-card-title">You're paying $4,000–8,000/year for this</h3>
+          <p class="problem-card-text">Harvest, 10,000ft, Float — expensive tools that still give you unreliable data because the <strong>UX fights human nature</strong>.</p>
+        </article>
+      </div>
+
+      <div class="problem-transition animate-on-scroll">
+        <p>What if time tracking worked with how people actually work?</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- =============================================
+       SOLUTION SECTION
+  ============================================= -->
+  <section id="solution" class="solution-section">
+    <div class="solution-container">
+      <header class="solution-header animate-on-scroll">
+        <h2 class="solution-headline">Confirmation over tracking</h2>
+        <p class="solution-tagline">How Zhuzh works in 3 simple steps</p>
+      </header>
+
+      <div class="solution-steps">
+        <!-- Step 1 -->
+        <div class="solution-step solution-step--1 animate-on-scroll">
+          <div class="solution-step__number">1</div>
+          <div class="solution-step__content">
+            <div class="solution-step__icon">
+              <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="6" y="10" width="36" height="32" rx="4" stroke="currentColor" stroke-width="2.5" fill="none"/>
+                <path d="M6 18H42" stroke="currentColor" stroke-width="2.5"/>
+                <path d="M16 6V14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                <path d="M32 6V14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                <rect x="12" y="24" width="6" height="6" rx="1" fill="currentColor"/>
+                <rect x="21" y="24" width="6" height="6" rx="1" fill="currentColor"/>
+                <rect x="30" y="24" width="6" height="6" rx="1" fill="currentColor"/>
+                <rect x="12" y="33" width="6" height="6" rx="1" fill="currentColor"/>
+                <rect x="21" y="33" width="6" height="6" rx="1" fill="currentColor"/>
+              </svg>
+            </div>
+            <h3 class="solution-step__title">Producers plan the week</h3>
+            <p class="solution-step__description">Your PM allocates people to projects in a visual calendar. By Thursday, everyone knows their Monday.</p>
+          </div>
+          <div class="solution-connector solution-connector--1">
+            <svg viewBox="0 0 100 40" preserveAspectRatio="none">
+              <path d="M0 20 Q50 20 100 20" stroke="var(--zhuzh-orange)" stroke-width="2" fill="none" stroke-dasharray="6 4"/>
+              <polygon points="95,15 100,20 95,25" fill="var(--zhuzh-orange)"/>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Step 2 - The Key Visual -->
+        <div class="solution-step solution-step--2 solution-step--featured animate-on-scroll">
+          <div class="solution-step__number">2</div>
+          <div class="solution-step__content">
+            <h3 class="solution-step__title">Friday Slack DM</h3>
+            <p class="solution-step__description">Each team member gets a DM with their planned hours pre-filled. Most weeks, they just tap 'Looks Good ✓'</p>
+
+            <!-- Slack DM Mockup -->
+            <div class="solution-slack-mockup">
+              <div class="solution-slack__container">
+                <div class="solution-slack__header">
+                  <div class="solution-slack__avatar">
+                    <div class="solution-slack__avatar-icon">Z</div>
+                  </div>
+                  <div class="solution-slack__meta">
+                    <span class="solution-slack__bot-name">Zhuzh</span>
+                    <span class="solution-slack__app-badge">APP</span>
+                    <span class="solution-slack__time">10:00 AM</span>
+                  </div>
+                </div>
+
+                <div class="solution-slack__body">
+                  <p class="solution-slack__greeting">📅 Time to confirm your week!</p>
+
+                  <div class="solution-slack__table">
+                    <div class="solution-slack__row">
+                      <span class="solution-slack__project">Google Cloud UX</span>
+                      <span class="solution-slack__hours">24 hrs</span>
+                    </div>
+                    <div class="solution-slack__row">
+                      <span class="solution-slack__project">Patina</span>
+                      <span class="solution-slack__hours">12 hrs</span>
+                    </div>
+                    <div class="solution-slack__row">
+                      <span class="solution-slack__project">Internal/Admin</span>
+                      <span class="solution-slack__hours">4 hrs</span>
+                    </div>
+                    <div class="solution-slack__divider"></div>
+                    <div class="solution-slack__row solution-slack__row--total">
+                      <span class="solution-slack__project">Total</span>
+                      <span class="solution-slack__hours">40 hrs</span>
+                    </div>
+                  </div>
+
+                  <div class="solution-slack__actions">
+                    <button class="solution-slack__btn solution-slack__btn--primary">Looks Good ✓</button>
+                    <button class="solution-slack__btn solution-slack__btn--secondary">Adjust Hours</button>
+                    <button class="solution-slack__btn solution-slack__btn--secondary">Add Work</button>
+                  </div>
+                </div>
+              </div>
+              <div class="solution-slack__glow"></div>
+            </div>
+          </div>
+          <div class="solution-connector solution-connector--2">
+            <svg viewBox="0 0 100 40" preserveAspectRatio="none">
+              <path d="M0 20 Q50 20 100 20" stroke="var(--zhuzh-orange)" stroke-width="2" fill="none" stroke-dasharray="6 4"/>
+              <polygon points="95,15 100,20 95,25" fill="var(--zhuzh-orange)"/>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="solution-step solution-step--3 animate-on-scroll">
+          <div class="solution-step__number">3</div>
+          <div class="solution-step__content">
+            <div class="solution-step__icon">
+              <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="4" y="8" width="40" height="32" rx="4" stroke="currentColor" stroke-width="2.5" fill="none"/>
+                <path d="M10 32V24" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+                <path d="M18 32V20" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+                <path d="M26 32V16" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+                <path d="M34 32V22" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+                <circle cx="34" cy="14" r="3" fill="var(--zhuzh-lime)"/>
+                <path d="M10 24 L18 20 L26 16 L34 14" stroke="var(--zhuzh-orange)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <h3 class="solution-step__title">Budgets update automatically</h3>
+            <p class="solution-step__description">Leadership sees real-time budget burn. No chasing people. No month-end scramble. Data you can trust.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Key Stat Callout -->
+      <div class="solution-callout animate-on-scroll">
+        <div class="solution-callout__inner">
+          <span class="solution-callout__stat">70%</span>
+          <span class="solution-callout__text">of weeks, your team confirms with one tap.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =============================================
+       FEATURES SECTION
+  ============================================= -->
+  <section id="features" class="features-section">
+    <div class="features-container">
+      <h2 class="features-headline animate-on-scroll">Everything you need. Nothing you don't.</h2>
+
+      <div class="features-grid">
+        <div class="features-card animate-on-scroll">
+          <div class="features-card-icon">🔔</div>
+          <h3 class="features-card-title">Slack-Native</h3>
+          <p class="features-card-description">Confirmations happen where your team already works. No new app to forget.</p>
+        </div>
+
+        <div class="features-card animate-on-scroll">
+          <div class="features-card-icon">📊</div>
+          <h3 class="features-card-title">Budget Visibility</h3>
+          <p class="features-card-description">Real-time budget burn by project, phase, and person. Know where you stand before it's too late.</p>
+        </div>
+
+        <div class="features-card animate-on-scroll">
+          <div class="features-card-icon">✅</div>
+          <h3 class="features-card-title">One-Click Approvals</h3>
+          <p class="features-card-description">Managers approve clean submissions instantly. Only review anomalies.</p>
+        </div>
+
+        <div class="features-card animate-on-scroll">
+          <div class="features-card-icon">🏖️</div>
+          <h3 class="features-card-title">PTO-Aware</h3>
+          <p class="features-card-description">Google Calendar integration means no more 'Wait, Sam's out this week?' surprises.</p>
+        </div>
+
+        <div class="features-card features-card--highlight animate-on-scroll">
+          <div class="features-card-badge">Differentiator</div>
+          <div class="features-card-icon">🎤</div>
+          <h3 class="features-card-title">Voice Commands</h3>
+          <p class="features-card-description">Say 'Move Sarah from Project A to Project B' and it happens. Resource planning at the speed of thought.</p>
+        </div>
+
+        <div class="features-card animate-on-scroll">
+          <div class="features-card-icon">🔍</div>
+          <h3 class="features-card-title">Audit Trail</h3>
+          <p class="features-card-description">Over budget because of 40 extra hours on QA in week 3 — not just 'over budget.'</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =============================================
+       TRUST SECTION
+  ============================================= -->
+  <section id="trust" class="trust-section">
+    <div class="trust-container">
+      <h2 class="trust-headline animate-on-scroll">We believe your team is doing the work</h2>
+
+      <div class="trust-content animate-on-scroll">
+        <p class="trust-paragraph">
+          Most time tracking tools assume the worst. Idle detection. Screenshot monitoring.
+          Minute-by-minute surveillance. That's not how creative agencies build great culture.
+        </p>
+        <p class="trust-paragraph">
+          Zhuzh assumes your team is doing the work. We just help them confirm it — quickly,
+          painlessly, in a tool they already use. The result? Reliable data without the resentment.
+        </p>
+      </div>
+
+      <blockquote class="trust-blockquote animate-on-scroll">
+        <p class="trust-quote-text">If the team hates using it, the data will be garbage.</p>
+        <cite class="trust-quote-author">— Agency CEO</cite>
+      </blockquote>
+    </div>
+  </section>
+
+  <!-- =============================================
+       PILOT CTA SECTION
+  ============================================= -->
+  <section id="pilot" class="pilot-section">
+    <div class="pilot-sparkle pilot-sparkle--1"></div>
+    <div class="pilot-sparkle pilot-sparkle--2"></div>
+    <div class="pilot-sparkle pilot-sparkle--3"></div>
+    <div class="pilot-sparkle pilot-sparkle--4"></div>
+
+    <div class="pilot-container">
+      <div class="pilot-content animate-on-scroll">
+        <h2 class="pilot-headline">Join the founding team pilot</h2>
+        <p class="pilot-body">
+          We're inviting 6 creative agencies to use Zhuzh free for 6 months.
+          You'll help shape the product while getting early access to features
+          that will cost real money at launch.
+        </p>
+
+        <ul class="pilot-benefits">
+          <li class="pilot-benefit">
+            <span class="pilot-benefit-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </span>
+            <span>6 months free access</span>
+          </li>
+          <li class="pilot-benefit">
+            <span class="pilot-benefit-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </span>
+            <span>Direct line to the product team</span>
+          </li>
+          <li class="pilot-benefit">
+            <span class="pilot-benefit-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </span>
+            <span>Your feedback shapes the roadmap</span>
+          </li>
+          <li class="pilot-benefit">
+            <span class="pilot-benefit-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </span>
+            <span>Lock in founding-member pricing when you convert</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="pilot-form-wrapper animate-on-scroll">
+        <form class="pilot-form" action="https://formspree.io/f/xyzgkpvl" method="POST">
+          <div class="pilot-form-row">
+            <div class="pilot-form-group">
+              <label class="pilot-label" for="agency-name">Agency name</label>
+              <input type="text" id="agency-name" name="agency_name" class="pilot-input" required>
+            </div>
+            <div class="pilot-form-group">
+              <label class="pilot-label" for="your-name">Your name</label>
+              <input type="text" id="your-name" name="your_name" class="pilot-input" required>
+            </div>
+          </div>
+
+          <div class="pilot-form-row">
+            <div class="pilot-form-group">
+              <label class="pilot-label" for="email">Email</label>
+              <input type="email" id="email" name="email" class="pilot-input" required>
+            </div>
+            <div class="pilot-form-group">
+              <label class="pilot-label" for="team-size">Team size</label>
+              <select id="team-size" name="team_size" class="pilot-select" required>
+                <option value="" disabled selected>Select team size</option>
+                <option value="5-10">5-10</option>
+                <option value="11-25">11-25</option>
+                <option value="26-50">26-50</option>
+                <option value="50+">50+</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="pilot-form-group">
+            <label class="pilot-label" for="pain-point">
+              What's your biggest time tracking pain point?
+              <span class="pilot-label-optional">(optional)</span>
+            </label>
+            <textarea id="pain-point" name="pain_point" class="pilot-textarea" placeholder="Tell us what's broken..."></textarea>
+          </div>
+
+          <button type="submit" class="pilot-submit">Apply for the pilot</button>
+        </form>
+
+        <p class="pilot-note">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          We'll reach out within 48 hours to schedule a quick intro call.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- =============================================
+       FOOTER
+  ============================================= -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-left">
+        <img src="assets/zhuzh-wordmark-sparkle.png" alt="Zhuzh" class="footer-logo">
+        <span class="footer-tagline">A Use All Five product</span>
+      </div>
+
+      <div class="footer-right">
+        <a href="mailto:hello@zhuzh.app" class="footer-link">Contact</a>
+        <a href="#" class="footer-link">Privacy Policy</a>
+        <span class="footer-made">Made with ✨ in Los Angeles</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- =============================================
+       SCROLL ANIMATION SCRIPT
+  ============================================= -->
+  <script>
+    // Intersection Observer for scroll animations
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+        }
+      });
+    }, observerOptions);
+
+    // Observe all elements with animate-on-scroll class
+    document.querySelectorAll('.animate-on-scroll').forEach(el => {
+      observer.observe(el);
+    });
+
+    // Add staggered delays to cards
+    document.querySelectorAll('.problem-card, .features-card').forEach((card, index) => {
+      card.style.transitionDelay = `${index * 0.1}s`;
+    });
+
+    // Smooth scroll for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          target.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
+        }
+      });
+    });
+  </script>
+</body>
+</html>

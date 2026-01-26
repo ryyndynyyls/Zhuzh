@@ -1,0 +1,163 @@
+/**
+ * Zhuzh Design Tokens
+ * Generated for ResourceFlow → Zhuzh rebrand
+ */
+
+:root {
+  /* ========== BRAND COLORS ========== */
+  --zhuzh-orange: #FF8731;
+  --zhuzh-yellow: #FFF845;
+  --zhuzh-lime: #80FF9C;
+  --zhuzh-cream: #F7F6E6;
+  --zhuzh-dark: #33332F;
+  
+  /* ========== SEMANTIC COLORS ========== */
+  --zhuzh-primary: var(--zhuzh-orange);
+  --zhuzh-success: var(--zhuzh-lime);
+  --zhuzh-warning: var(--zhuzh-yellow);
+  --zhuzh-error: #FF6B6B;
+  --zhuzh-info: #64B5F6;
+  
+  /* ========== SURFACES (Light Mode) ========== */
+  --zhuzh-surface-base: var(--zhuzh-cream);
+  --zhuzh-surface-elevated: #FFFFFF;
+  --zhuzh-surface-sunken: #EFEDE0;
+  --zhuzh-surface-overlay: rgba(51, 51, 47, 0.5);
+  
+  /* ========== TEXT ========== */
+  --zhuzh-text-primary: var(--zhuzh-dark);
+  --zhuzh-text-secondary: #6B6B63;
+  --zhuzh-text-tertiary: #9E9E93;
+  --zhuzh-text-disabled: #BDBDB3;
+  --zhuzh-text-inverse: var(--zhuzh-cream);
+  
+  /* ========== BORDERS ========== */
+  --zhuzh-border-default: #E0DFD3;
+  --zhuzh-border-strong: #C7C6BA;
+  --zhuzh-border-focus: var(--zhuzh-orange);
+  
+  /* ========== MD3 ORANGE PALETTE ========== */
+  --zhuzh-orange-5: #FFF8F3;
+  --zhuzh-orange-10: #FFEDE0;
+  --zhuzh-orange-20: #FFD9B8;
+  --zhuzh-orange-30: #FFC48F;
+  --zhuzh-orange-40: #FFAF67;
+  --zhuzh-orange-50: #FF8731;
+  --zhuzh-orange-60: #E66D1A;
+  --zhuzh-orange-70: #CC5500;
+  --zhuzh-orange-80: #994000;
+  --zhuzh-orange-90: #662B00;
+  --zhuzh-orange-95: #331500;
+  
+  /* ========== MD3 LIME PALETTE ========== */
+  --zhuzh-lime-5: #F2FFF5;
+  --zhuzh-lime-10: #E0FFE7;
+  --zhuzh-lime-20: #B8FFCA;
+  --zhuzh-lime-30: #80FF9C;
+  --zhuzh-lime-40: #4DE876;
+  --zhuzh-lime-50: #2ECC5E;
+  --zhuzh-lime-60: #1EB34A;
+  --zhuzh-lime-70: #159938;
+  --zhuzh-lime-80: #0D8028;
+  --zhuzh-lime-90: #066619;
+  --zhuzh-lime-95: #034D0D;
+  
+  /* ========== TYPOGRAPHY ========== */
+  --zhuzh-font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --zhuzh-font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  
+  /* Display */
+  --zhuzh-display-large: 600 57px/64px var(--zhuzh-font-family);
+  --zhuzh-display-medium: 600 45px/52px var(--zhuzh-font-family);
+  --zhuzh-display-small: 600 36px/44px var(--zhuzh-font-family);
+  
+  /* Headline */
+  --zhuzh-headline-large: 600 32px/40px var(--zhuzh-font-family);
+  --zhuzh-headline-medium: 600 28px/36px var(--zhuzh-font-family);
+  --zhuzh-headline-small: 600 24px/32px var(--zhuzh-font-family);
+  
+  /* Title */
+  --zhuzh-title-large: 500 22px/28px var(--zhuzh-font-family);
+  --zhuzh-title-medium: 500 16px/24px var(--zhuzh-font-family);
+  --zhuzh-title-small: 500 14px/20px var(--zhuzh-font-family);
+  
+  /* Body */
+  --zhuzh-body-large: 400 16px/24px var(--zhuzh-font-family);
+  --zhuzh-body-medium: 400 14px/20px var(--zhuzh-font-family);
+  --zhuzh-body-small: 400 12px/16px var(--zhuzh-font-family);
+  
+  /* Label */
+  --zhuzh-label-large: 500 14px/20px var(--zhuzh-font-family);
+  --zhuzh-label-medium: 500 12px/16px var(--zhuzh-font-family);
+  --zhuzh-label-small: 500 11px/16px var(--zhuzh-font-family);
+  
+  /* ========== ELEVATION ========== */
+  --zhuzh-elevation-1: 0 1px 2px rgba(51, 51, 47, 0.05);
+  --zhuzh-elevation-2: 0 2px 4px rgba(51, 51, 47, 0.08), 0 1px 2px rgba(51, 51, 47, 0.04);
+  --zhuzh-elevation-3: 0 4px 8px rgba(51, 51, 47, 0.10), 0 2px 4px rgba(51, 51, 47, 0.06);
+  --zhuzh-elevation-4: 0 8px 16px rgba(51, 51, 47, 0.12), 0 4px 8px rgba(51, 51, 47, 0.08);
+  --zhuzh-elevation-5: 0 16px 32px rgba(51, 51, 47, 0.14), 0 8px 16px rgba(51, 51, 47, 0.10);
+  
+  /* ========== SHAPE ========== */
+  --zhuzh-radius-none: 0;
+  --zhuzh-radius-xs: 4px;
+  --zhuzh-radius-sm: 8px;
+  --zhuzh-radius-md: 12px;
+  --zhuzh-radius-lg: 16px;
+  --zhuzh-radius-xl: 24px;
+  --zhuzh-radius-full: 9999px;
+  
+  /* ========== SPACING ========== */
+  --zhuzh-space-1: 4px;
+  --zhuzh-space-2: 8px;
+  --zhuzh-space-3: 12px;
+  --zhuzh-space-4: 16px;
+  --zhuzh-space-5: 20px;
+  --zhuzh-space-6: 24px;
+  --zhuzh-space-8: 32px;
+  --zhuzh-space-10: 40px;
+  --zhuzh-space-12: 48px;
+  --zhuzh-space-16: 64px;
+  
+  /* ========== TRANSITIONS ========== */
+  --zhuzh-transition-fast: 150ms ease;
+  --zhuzh-transition-normal: 250ms ease;
+  --zhuzh-transition-slow: 400ms ease;
+  --zhuzh-transition-bounce: 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ========== DARK MODE ========== */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --zhuzh-surface-base: #1A1917;
+    --zhuzh-surface-elevated: #2A2520;
+    --zhuzh-surface-sunken: #121110;
+    --zhuzh-surface-overlay: rgba(247, 246, 230, 0.1);
+    
+    --zhuzh-text-primary: var(--zhuzh-cream);
+    --zhuzh-text-secondary: #A8A89E;
+    --zhuzh-text-tertiary: #737369;
+    --zhuzh-text-disabled: #52524A;
+    --zhuzh-text-inverse: var(--zhuzh-dark);
+    
+    --zhuzh-border-default: #3D3D36;
+    --zhuzh-border-strong: #52524A;
+  }
+}
+
+/* Dark mode class override */
+.dark {
+  --zhuzh-surface-base: #1A1917;
+  --zhuzh-surface-elevated: #2A2520;
+  --zhuzh-surface-sunken: #121110;
+  --zhuzh-surface-overlay: rgba(247, 246, 230, 0.1);
+  
+  --zhuzh-text-primary: var(--zhuzh-cream);
+  --zhuzh-text-secondary: #A8A89E;
+  --zhuzh-text-tertiary: #737369;
+  --zhuzh-text-disabled: #52524A;
+  --zhuzh-text-inverse: var(--zhuzh-dark);
+  
+  --zhuzh-border-default: #3D3D36;
+  --zhuzh-border-strong: #52524A;
+}
