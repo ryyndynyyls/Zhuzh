@@ -608,7 +608,10 @@ export default function ProjectSettingsPage() {
         intensity="subtle"
         animated={false}
         header={{ icon: <LayersOutlined />, title: 'Phases' }}
-        headerAction={
+        sx={{ mb: 3 }}
+      >
+        {/* Add Phase Button */}
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
           <Button
             startIcon={<AddIcon />}
             onClick={handleAddPhase}
@@ -625,9 +628,7 @@ export default function ProjectSettingsPage() {
           >
             Add Phase
           </Button>
-        }
-        sx={{ mb: 3 }}
-      >
+        </Box>
 
         {/* Budget mismatch warning */}
         {budgetMismatch && (

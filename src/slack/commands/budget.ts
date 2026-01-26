@@ -54,8 +54,31 @@ export function registerBudgetCommand(app: App) {
 
     // Single match - show detailed budget
     const project = projects[0];
+    const budgetInfo = {
+      projectId: project.id,
+      projectName: project.name,
+      clientName: project.client?.name || 'Unknown Client',
+      budgetHours: project.budget_hours || 0,
+      usedHours: 0, // Would need to fetch from budget view
+      remainingHours: project.budget_hours || 0,
+      percentageUsed: 0,
+      hourlyRate: project.hourly_rate,
+      budgetDollars: project.hourly_rate ? (project.budget_hours || 0) * project.hourly_rate : null,
+      usedDollars: null,
+      remainingDollars: null,
+      isBillable: project.is_billable,
+      phases: project.phases?.map((p: { id: string; name: string; budget_hours: number | null; status: string }) => ({
+        id: p.id,
+        name: p.name,
+        budgetHours: p.budget_hours || 0,
+        usedHours: 0,
+        remainingHours: p.budget_hours || 0,
+        percentageUsed: 0,
+        status: p.status as 'pending' | 'active' | 'complete',
+      })) || [],
+    };
     await respond({
-      blocks: buildBudgetBlocks(project, user?.role || 'employee')
+      blocks: buildBudgetBlocks(budgetInfo, user?.role || 'employee')
     });
   });
 }

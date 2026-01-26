@@ -20,7 +20,7 @@ const ALLOWED_TABLES = [
  */
 router.get('/tables', async (req, res) => {
   try {
-    const { data, error } = await supabase.rpc('get_table_info');
+    const { data, error } = await supabase.rpc('get_table_info' as never);
 
     if (error) {
       // Fallback: query information_schema directly
@@ -38,7 +38,7 @@ router.get('/tables', async (req, res) => {
         });
       }
 
-      return res.json({ tables: tables?.map(t => t.table_name) || [] });
+      return res.json({ tables: (tables as unknown as Record<string, unknown>[])?.map((t: Record<string, unknown>) => t.table_name) || [] });
     }
 
     res.json({ tables: data });
@@ -64,9 +64,9 @@ router.get('/schema/:table', async (req, res) => {
 
   try {
     // Get column info using a safe query
-    const { data, error } = await supabase.rpc('get_column_info', {
+    const { data, error } = await supabase.rpc('get_column_info' as never, {
       p_table_name: table
-    });
+    } as never);
 
     if (error) {
       // Fallback: try to get a single row and infer schema
@@ -79,11 +79,12 @@ router.get('/schema/:table', async (req, res) => {
         return res.status(500).json({ error: 'Could not fetch schema' });
       }
 
-      const inferredSchema = sample && sample[0]
-        ? Object.keys(sample[0]).map(col => ({
+      const firstSample = (sample as unknown as Record<string, unknown>[])?.[0] as Record<string, unknown> | undefined;
+      const inferredSchema = firstSample
+        ? Object.keys(firstSample).map(col => ({
             column_name: col,
-            data_type: typeof sample[0][col],
-            sample_value: sample[0][col]
+            data_type: typeof firstSample[col],
+            sample_value: firstSample[col]
           }))
         : [];
 
@@ -142,9 +143,9 @@ router.post('/query', async (req, res) => {
 
   try {
     // Execute via Supabase's raw SQL (requires service role)
-    const { data, error } = await supabase.rpc('exec_read_query', {
+    const { data, error } = await supabase.rpc('exec_read_query' as never, {
       query_text: sql
-    });
+    } as never);
 
     if (error) {
       // If RPC doesn't exist, return helpful error
@@ -174,7 +175,7 @@ $;
       return res.status(500).json({ error: error.message });
     }
 
-    res.json({ data, rowCount: Array.isArray(data) ? data.length : 0 });
+    res.json({ data, rowCount: Array.isArray(data) ? (data as unknown[]).length : 0 });
   } catch (err: any) {
     console.error('Query execution error:', err);
     res.status(500).json({ error: err.message || 'Query failed' });

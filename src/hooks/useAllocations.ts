@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
-import type { AllocationRow, ProjectRow, ProjectPhaseRow } from '../types/database';
+import type { AllocationRow } from '../types/database';
 
 interface AllocationWithRelations extends AllocationRow {
-  project?: ProjectRow;
-  phase?: ProjectPhaseRow;
+  project: { id: string; name: string; color: string | null };
+  phase: { id: string; name: string } | null;
 }
 
 interface UseAllocationsOptions {
@@ -46,7 +46,7 @@ export function useAllocations(options: UseAllocationsOptions) {
     fetchAllocations();
   }, [fetchAllocations]);
 
-  const createAllocation = async (allocation: Partial<AllocationRow>) => {
+  const createAllocation = async (allocation: Partial<AllocationRow> & { week_start: string; planned_hours: number; project_id: string; user_id: string }) => {
     const { data, error } = await supabase
       .from('allocations')
       .insert(allocation)

@@ -307,11 +307,7 @@ export const BudgetDashboard: React.FC = () => {
         <Grid container spacing={2.5}>
           {filteredProjects.map((project, index) => (
             <Grid
-              item
-              xs={12}
-              sm={6}
-              lg={4}
-              xl={3}
+              size={{ xs: 12, sm: 6, lg: 4, xl: 3 }}
               key={project.id}
               sx={getStaggeredStyle(Math.min(index, 10))}
             >

@@ -150,7 +150,7 @@ async function hasAlertedThreshold(projectId: string, threshold: number): Promis
     .eq('threshold', threshold)
     .limit(1);
 
-  return (data && data.length > 0);
+  return !!(data && data.length > 0);
 }
 
 /**

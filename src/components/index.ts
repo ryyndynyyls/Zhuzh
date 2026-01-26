@@ -22,9 +22,9 @@ export { AuditTimeline } from './AuditTimeline';
 export { AuditTrailModal, ProjectAuditTrailModal } from './AuditTrailModal';
 
 // Timesheet
-export { ConfirmModal } from './ConfirmModal';
-export { TimeEntryRow } from './TimeEntryRow';
-export { AddUnplannedWorkModal } from './AddUnplannedWorkModal';
+export { default as ConfirmModal } from './ConfirmModal';
+export { default as TimeEntryRow } from './TimeEntryRow';
+export { default as AddUnplannedWorkModal } from './AddUnplannedWorkModal';
 
 // Shared
 export * from './shared';

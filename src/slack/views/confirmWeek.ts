@@ -1,10 +1,10 @@
-import type { View } from '@slack/bolt';
+import type { View } from '@slack/types';
 import { formatWeekRange } from '../../lib/timezone';
 
 interface Allocation {
   id: string;
-  project: { name: string; color: string };
-  phase?: { name: string };
+  project: { name: string; color: string | null };
+  phase?: { name: string } | null;
   planned_hours: number;
 }
 
@@ -12,13 +12,13 @@ interface UnplannedEntry {
   id: string;
   project: { name: string };
   actual_hours: number;
-  notes?: string;
+  notes?: string | null;
 }
 
 interface ExistingConfirmation {
   id: string;
   status: string;
-  notes?: string;
+  notes?: string | null;
 }
 
 // Map hex colors to closest emoji circles
@@ -110,7 +110,7 @@ export function buildConfirmWeekModal(
   // PROJECT INPUTS: Color-coded with clear separation
   // ═══════════════════════════════════════════
   for (const alloc of allocations) {
-    const colorDot = getColorEmoji(alloc.project.color);
+    const colorDot = getColorEmoji(alloc.project.color ?? '#808080');
     const phaseSuffix = alloc.phase ? `  ›  ${alloc.phase.name}` : '';
     
     blocks.push({
@@ -246,5 +246,5 @@ export function buildConfirmWeekModal(
     submit: isApproved ? undefined : { type: 'plain_text', text: submitButtonText },
     close: { type: 'plain_text', text: isApproved ? 'Done' : 'Cancel' },
     blocks
-  };
+  } as View;
 }

@@ -48,8 +48,9 @@ router.get('/:entityType/:entityId', async (req, res) => {
         summary = `Deleted ${entityType.replace('_', ' ')}`;
       } else if (entry.action === 'update') {
         // Summarize key changes
-        const oldData = changes.old || {};
-        const newData = changes.new || {};
+        const typedChanges = changes as { old?: Record<string, unknown>; new?: Record<string, unknown> };
+        const oldData = typedChanges.old || {};
+        const newData = typedChanges.new || {};
         const changedFields: string[] = [];
 
         // Check for hours changes

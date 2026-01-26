@@ -80,7 +80,10 @@ export function ResourceCalendarPage() {
           .order('name');
 
         if (fetchError) throw fetchError;
-        setProjects(data || []);
+        setProjects((data || []).map(p => ({
+          ...p,
+          color: p.color ?? '#808080'
+        })));
       } catch (err) {
         console.error('Failed to fetch projects:', err);
         setError(err instanceof Error ? err : new Error('Failed to fetch projects'));

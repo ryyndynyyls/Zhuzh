@@ -1,4 +1,4 @@
-import type { View } from '@slack/bolt';
+import type { View } from '@slack/types';
 
 interface TimeEntry {
   project: { name: string };
@@ -98,7 +98,7 @@ export function buildApprovalDetailModal(confirmation: Confirmation): View {
         ]
       }
     ]
-  };
+  } as View;
 }
 
 function formatWeekLabel(weekStart: string): string {

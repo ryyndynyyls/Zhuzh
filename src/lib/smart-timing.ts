@@ -99,7 +99,7 @@ async function checkPTOForDate(userId: string, date: Date): Promise<boolean> {
     .eq('date', dateStr)
     .limit(1);
   
-  return (ptoEntries && ptoEntries.length > 0);
+  return !!(ptoEntries && ptoEntries.length > 0);
 }
 
 /**
@@ -151,7 +151,7 @@ async function checkFridayOffGroup(userId: string, orgId: string, friday: Date):
     .lte('start_time', `${fridayStr}T23:59:59`)
     .gte('end_time', `${fridayStr}T00:00:00`);
   
-  return (events && events.length > 0);
+  return !!(events && events.length > 0);
 }
 
 // =============================================================================

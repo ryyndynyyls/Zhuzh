@@ -489,6 +489,96 @@ export function buildBudgetBlocks(
   return blocks;
 }
 
+/**
+ * Build blocks for all projects budget summary
+ */
+export function buildAllProjectsBudgetBlocks(
+  projects: Array<{
+    project_name: string | null;
+    client_name: string | null;
+    budget_hours: number | null;
+    burned_hours: number | null;
+    burn_percentage: number | null;
+    remaining_hours: number | null;
+  }> | null,
+  userRole: UserRole
+): Block[] {
+  const blocks: Block[] = [];
+
+  blocks.push({
+    type: 'header',
+    text: plainText('Project Budget Summary'),
+  } as HeaderBlock);
+
+  blocks.push({ type: 'divider' } as DividerBlock);
+
+  if (!projects || projects.length === 0) {
+    blocks.push({
+      type: 'section',
+      text: mrkdwn('_No projects found._'),
+    } as SectionBlock);
+    return blocks;
+  }
+
+  for (const project of projects) {
+    const burnPct = project.burn_percentage ?? 0;
+    const progressBar = buildProgressBar(burnPct, 10);
+    const statusEmoji = burnPct >= 90 ? '[!]' : burnPct >= 75 ? '[*]' : '[OK]';
+
+    blocks.push({
+      type: 'section',
+      text: mrkdwn(
+        `*${project.project_name || 'Unknown'}* (${project.client_name || 'No Client'})\n` +
+        `${statusEmoji} \`${progressBar}\` ${formatPercentage(burnPct)} used | ${formatHours(project.remaining_hours ?? 0)}h remaining`
+      ),
+    } as SectionBlock);
+  }
+
+  return blocks;
+}
+
+/**
+ * Build blocks for pending approval notification
+ */
+export function buildPendingApprovalBlocks(
+  confirmations: Array<{
+    id: string;
+    week_start: string;
+    submitted_at: string | null;
+    user?: { name: string; email: string } | null;
+  }>
+): Block[] {
+  const blocks: Block[] = [];
+
+  blocks.push({
+    type: 'header',
+    text: plainText('Pending Approvals'),
+  } as HeaderBlock);
+
+  blocks.push({ type: 'divider' } as DividerBlock);
+
+  if (!confirmations || confirmations.length === 0) {
+    blocks.push({
+      type: 'section',
+      text: mrkdwn('_No pending approvals._'),
+    } as SectionBlock);
+    return blocks;
+  }
+
+  for (const conf of confirmations) {
+    const weekDate = new Date(conf.week_start);
+    const weekLabel = weekDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+    blocks.push({
+      type: 'section',
+      text: mrkdwn(`*${conf.user?.name || 'Unknown'}* - Week of ${weekLabel}`),
+      accessory: button('Review', 'review_approval', conf.id),
+    } as SectionBlock);
+  }
+
+  return blocks;
+}
+
 // ============================================
 // Table Builders
 // ============================================

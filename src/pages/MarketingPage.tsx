@@ -140,7 +140,7 @@ export function MarketingPage() {
         <Container maxWidth="lg">
           <Grid container spacing={4}>
             {valueProps.map((prop, index) => (
-              <Grid item xs={12} md={4} key={prop.title}>
+              <Grid size={{ xs: 12, md: 4 }} key={prop.title}>
                 <Box
                   sx={{
                     backgroundColor: colors.dark.bg.secondary,

@@ -380,7 +380,7 @@ export async function searchUsers(
       matchedOn = 'name';
     }
     // Name starts with query
-    else if (nameLower.startsWith(searchQuery) || nameLower.split(' ').some(part => part.startsWith(searchQuery))) {
+    else if (nameLower.startsWith(searchQuery) || nameLower.split(' ').some((part: string) => part.startsWith(searchQuery))) {
       score = 80;
       matchedOn = 'name';
     }
@@ -390,7 +390,7 @@ export async function searchUsers(
       matchedOn = 'name';
     }
     // Nickname match
-    else if (nicknamesLower.split(',').some(nick => nick.trim() === searchQuery)) {
+    else if (nicknamesLower.split(',').some((nick: string) => nick.trim() === searchQuery)) {
       score = 90;
       matchedOn = 'nickname';
     }
@@ -462,7 +462,7 @@ export async function searchProjects(
       matchedOn = 'name';
     }
     // Name starts with query
-    else if (nameLower.startsWith(searchQuery) || nameLower.split(' ').some(part => part.toLowerCase().startsWith(searchQuery))) {
+    else if (nameLower.startsWith(searchQuery) || nameLower.split(' ').some((part: string) => part.toLowerCase().startsWith(searchQuery))) {
       score = 80;
       matchedOn = 'name';
     }
@@ -472,7 +472,7 @@ export async function searchProjects(
       matchedOn = 'name';
     }
     // Alias exact match
-    else if (aliasesLower.split(',').some(alias => alias.trim() === searchQuery)) {
+    else if (aliasesLower.split(',').some((alias: string) => alias.trim() === searchQuery)) {
       score = 95;
       matchedOn = 'alias';
     }

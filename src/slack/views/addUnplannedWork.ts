@@ -1,4 +1,4 @@
-import type { View } from '@slack/bolt';
+import type { View } from '@slack/types';
 
 interface Project {
   id: string;
@@ -77,5 +77,5 @@ export function buildAddUnplannedWorkModal(
         optional: true
       }
     ]
-  };
+  } as View;
 }

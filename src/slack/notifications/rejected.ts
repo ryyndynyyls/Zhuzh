@@ -8,7 +8,7 @@ export async function sendRejectionNotification(app: App, confirmationId: string
   // Get confirmation with user
   const { data: confirmation } = await supabase
     .from('time_confirmations')
-    .select('*, user:users(name, slack_user_id)')
+    .select('*, user:users!user_id(name, slack_user_id)')
     .eq('id', confirmationId)
     .single();
 

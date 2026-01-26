@@ -51,9 +51,9 @@ export function ApprovalsPage() {
     }
   };
 
-  const handleReject = async (id: string, reason: string) => {
+  const handleReject = async (id: string, reason?: string) => {
     try {
-      await rejectConfirmation(id, reason);
+      await rejectConfirmation(id, reason || '');
       setSnackbar({ open: true, message: 'Timesheet rejected', severity: 'success' });
     } catch (err) {
       setSnackbar({ open: true, message: 'Failed to reject timesheet', severity: 'error' });
@@ -90,8 +90,8 @@ export function ApprovalsPage() {
       employee: {
         id: a.user?.id || '',
         name: a.user?.name || 'Unknown',
-        avatar: a.user?.avatar_url,
-        discipline: a.user?.discipline,
+        avatar: a.user?.avatar_url ?? undefined,
+        discipline: a.user?.discipline ?? undefined,
       },
       weekStart: a.week_start,
       submittedAt: a.submitted_at || '',
@@ -103,7 +103,7 @@ export function ApprovalsPage() {
       })) || [],
       totalPlanned: a.totalPlanned || 0,
       totalActual: a.totalActual || 0,
-      notes: a.notes,
+      notes: a.notes ?? undefined,
       hasVarianceWarning: a.hasVarianceWarning || false,
       hasRubberStampWarning: a.hasRubberStampWarning || false
     };

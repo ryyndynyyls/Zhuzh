@@ -377,12 +377,12 @@ export async function syncUserCalendar(
         // Match by email first
         const { data: matchedByEmail } = await supabase
           .from('users')
-          .select('id, email')
+          .select('id, email, name')
           .eq('org_id', user.org_id)
           .in('email', attendeeEmails);
 
         // Also try to match by name from email (for aliases like kate@... → kathryn)
-        const matchedUsers = matchedByEmail || [];
+        const matchedUsers: Array<{ id: string; name: string }> = (matchedByEmail || []).map(u => ({ id: u.id, name: u.name }));
         const matchedIds = new Set(matchedUsers.map(u => u.id));
 
         // If some attendees weren't matched by email, try name matching
@@ -576,11 +576,11 @@ export async function detectFridayOffAttendees(
     // Match by email first
     const { data: matchedByEmail } = await supabase
       .from('users')
-      .select('id, email')
+      .select('id, email, name, nicknames')
       .eq('org_id', orgId)
       .in('email', attendeeEmails);
 
-    const matchedUsers = matchedByEmail || [];
+    const matchedUsers: Array<{ id: string; name: string; nicknames?: string | null }> = matchedByEmail || [];
     const matchedIds = new Set(matchedUsers.map(u => u.id));
 
     // Also try to match by name from email (for aliases)
@@ -595,7 +595,7 @@ export async function detectFridayOffAttendees(
           .eq('org_id', orgId)
           .eq('is_active', true);
 
-        const matched = nameMatch?.find(u => 
+        const matched = nameMatch?.find(u =>
           u.name.toLowerCase().split(' ')[0] === firstName ||
           u.nicknames?.toLowerCase().includes(firstName)
         );

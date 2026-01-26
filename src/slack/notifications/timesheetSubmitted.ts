@@ -10,7 +10,7 @@ export async function sendTimesheetSubmittedNotification(app: App, confirmationI
     .from('time_confirmations')
     .select(`
       *,
-      user:users(name, email),
+      user:users!user_id(name, email),
       entries:time_entries(
         planned_hours,
         actual_hours,
@@ -63,7 +63,7 @@ export async function sendTimesheetSubmittedNotification(app: App, confirmationI
   for (const manager of managers) {
     try {
       await app.client.chat.postMessage({
-        channel: manager.slack_user_id,
+        channel: manager.slack_user_id!,
         blocks: [
           {
             type: 'header',

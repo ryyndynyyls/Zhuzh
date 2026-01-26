@@ -40,11 +40,11 @@ export async function sendBudgetAlertNotification(
   const urgency = threshold === 90 ? 'CRITICAL' : 'Warning';
 
   for (const manager of managers) {
+    if (!manager.slack_user_id) continue;
+
     try {
-      // Role-based display: show dollars to PMs/admins
-      const budgetDisplay = manager.role === 'admin'
-        ? `$${budgetStats.burned_dollars?.toLocaleString()} of $${budgetStats.budget_dollars?.toLocaleString()}`
-        : `${budgetStats.burned_hours}h of ${budgetStats.budget_hours}h`;
+      // Display hours-based budget information
+      const budgetDisplay = `${budgetStats.burned_hours ?? 0}h of ${budgetStats.budget_hours ?? 0}h`;
 
       await app.client.chat.postMessage({
         channel: manager.slack_user_id,
@@ -96,30 +96,37 @@ export async function sendBudgetAlertNotification(
 export async function checkAndSendBudgetAlerts(app: App) {
   const { data: projects } = await supabase
     .from('project_budget_summary')
-    .select('project_id, burn_percentage, last_alert_threshold');
+    .select('project_id, burn_percentage');
 
   if (!projects) return;
 
   for (const project of projects) {
+    if (!project.project_id) continue;
+
     const burnPct = project.burn_percentage || 0;
-    const lastAlert = project.last_alert_threshold || 0;
+
+    // Check what alerts have already been sent for this project
+    const { data: existingAlerts } = await supabase
+      .from('budget_alert_log')
+      .select('threshold')
+      .eq('project_id', project.project_id);
+
+    const alertedThresholds = new Set(existingAlerts?.map(a => a.threshold) ?? []);
 
     // Send 75% alert if not already sent
-    if (burnPct >= 75 && burnPct < 90 && lastAlert < 75) {
+    if (burnPct >= 75 && burnPct < 90 && !alertedThresholds.has(75)) {
       await sendBudgetAlertNotification(app, project.project_id, 75);
       await supabase
-        .from('projects')
-        .update({ last_alert_threshold: 75 })
-        .eq('id', project.project_id);
+        .from('budget_alert_log')
+        .insert({ project_id: project.project_id, threshold: 75, burn_percentage: burnPct });
     }
 
     // Send 90% alert if not already sent
-    if (burnPct >= 90 && lastAlert < 90) {
+    if (burnPct >= 90 && !alertedThresholds.has(90)) {
       await sendBudgetAlertNotification(app, project.project_id, 90);
       await supabase
-        .from('projects')
-        .update({ last_alert_threshold: 90 })
-        .eq('id', project.project_id);
+        .from('budget_alert_log')
+        .insert({ project_id: project.project_id, threshold: 90, burn_percentage: burnPct });
     }
   }
 }

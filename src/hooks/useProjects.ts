@@ -2,9 +2,13 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import type { ProjectRow, ClientRow, ProjectPhaseRow } from '../types/database';
 
-interface ProjectWithRelations extends ProjectRow {
-  client?: ClientRow;
-  phases?: ProjectPhaseRow[];
+export interface ProjectWithRelations extends ProjectRow {
+  client: ClientRow | null;
+  phases: ProjectPhaseRow[];
+  // Computed fields that may be included from budget views
+  totalActual?: number;
+  totalPlanned?: number;
+  burn_percentage?: number;
 }
 
 interface UseProjectsOptions {
@@ -27,14 +31,14 @@ export function useProjects(options: UseProjectsOptions = {}) {
         .from('projects')
         .select('*, client:clients(*), phases:project_phases(*)');
 
-      if (options.status) query = query.eq('status', options.status);
+      if (options.status) query = query.eq('status', options.status as 'active' | 'complete' | 'planning' | 'on-hold');
       if (options.clientId) query = query.eq('client_id', options.clientId);
       if (options.isActive !== undefined) query = query.eq('is_active', options.isActive);
 
       const { data, error: fetchError } = await query.order('priority', { ascending: true });
 
       if (fetchError) throw fetchError;
-      setProjects(data || []);
+      setProjects((data || []) as ProjectWithRelations[]);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to fetch projects'));
     } finally {
@@ -67,11 +71,11 @@ export function useProject(projectId: string | undefined) {
         const { data, error: fetchError } = await supabase
           .from('projects')
           .select('*, client:clients(*), phases:project_phases(*)')
-          .eq('id', projectId)
+          .eq('id', projectId as string)
           .single();
 
         if (fetchError) throw fetchError;
-        setProject(data);
+        setProject(data as ProjectWithRelations);
       } catch (err) {
         setError(err instanceof Error ? err : new Error('Failed to fetch project'));
       } finally {

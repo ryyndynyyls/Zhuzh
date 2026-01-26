@@ -25,7 +25,7 @@ export function registerPendingCommand(app: App) {
     // Get pending confirmations
     const { data: pending } = await supabase
       .from('time_confirmations')
-      .select('*, user:users(name, email), entries:time_entries(*)')
+      .select('*, user:users!user_id(name, email), entries:time_entries(*)')
       .eq('status', 'submitted')
       .order('submitted_at', { ascending: false });
 
@@ -37,7 +37,12 @@ export function registerPendingCommand(app: App) {
     }
 
     await respond({
-      blocks: buildPendingApprovalBlocks(pending)
+      blocks: buildPendingApprovalBlocks(pending as Array<{
+        id: string;
+        week_start: string;
+        submitted_at: string | null;
+        user?: { name: string; email: string } | null;
+      }>)
     });
   });
 }

@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
-import type { TimeConfirmationRow, TimeEntryRow, UserRow, ProjectRow } from '../types/database';
+import type { TimeConfirmationRow, TimeEntryRow, UserRow } from '../types/database';
 
 interface TimeEntryWithRelations extends TimeEntryRow {
-  project?: ProjectRow;
+  project: { name: string; color: string | null };
 }
 
 interface ConfirmationWithRelations extends TimeConfirmationRow {
@@ -35,7 +35,7 @@ export function useConfirmation(userId: string | undefined, weekStart: string) {
         .maybeSingle();
 
       if (fetchError) throw fetchError;
-      setConfirmation(data);
+      setConfirmation(data as ConfirmationWithRelations | null);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to fetch confirmation'));
     } finally {

@@ -2,14 +2,14 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 
 interface UserUtilization {
-  user_id: string;
-  user_name: string;
-  week_start: string;
-  total_planned_hours: number;
-  total_actual_hours: number;
-  utilization_percentage: number;
-  has_pto: boolean;
-  pto_hours: number;
+  user_id: string | null;
+  user_name: string | null;
+  week_start: string | null;
+  org_id: string | null;
+  total_planned_hours: number | null;
+  available_hours: number | null;
+  utilization_percentage: number | null;
+  pto_hours: number | null;
 }
 
 export function useTeamUtilization(weekStart: string) {
@@ -42,7 +42,7 @@ export function useTeamUtilization(weekStart: string) {
 
   // Summary stats
   const avgUtilization = utilization.length > 0
-    ? utilization.reduce((sum, u) => sum + u.utilization_percentage, 0) / utilization.length
+    ? utilization.reduce((sum, u) => sum + (u.utilization_percentage || 0), 0) / utilization.length
     : 0;
 
   return { utilization, avgUtilization, loading, error, refetch: fetchUtilization };

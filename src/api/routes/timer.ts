@@ -197,7 +197,7 @@ router.post('/stop', async (req, res) => {
 
     // Calculate duration
     const now = new Date();
-    const durationMinutes = calculateDurationMinutes(timer.started_at, now.toISOString());
+    const durationMinutes = calculateDurationMinutes(timer.started_at || now.toISOString(), now.toISOString());
 
     // Update the timer with stop time and duration
     const updateData: Record<string, any> = {
@@ -284,7 +284,7 @@ router.get('/current', async (req, res) => {
     }
 
     // Calculate elapsed time
-    const elapsed = calculateDurationMinutes(timer.started_at, new Date().toISOString());
+    const elapsed = calculateDurationMinutes(timer.started_at || new Date().toISOString(), new Date().toISOString());
 
     res.json({
       running: true,
@@ -461,22 +461,22 @@ router.get('/entries', async (req, res) => {
         project:projects(id, name, color),
         phase:project_phases(id, name)
       `)
-      .eq('user_id', userId)
+      .eq('user_id', userId as string)
       .order('entry_date', { ascending: false })
       .order('created_at', { ascending: false });
 
     // Only include completed entries (not running timers)
     query = query.or('entry_type.eq.manual,stopped_at.not.is.null');
 
-    if (startDate) {
+    if (typeof startDate === 'string') {
       query = query.gte('entry_date', startDate);
     }
 
-    if (endDate) {
+    if (typeof endDate === 'string') {
       query = query.lte('entry_date', endDate);
     }
 
-    if (projectId) {
+    if (typeof projectId === 'string') {
       query = query.eq('project_id', projectId);
     }
 
@@ -624,7 +624,7 @@ router.get('/summary/today', async (req, res) => {
       .single();
 
     const runningElapsed = runningTimer
-      ? calculateDurationMinutes(runningTimer.started_at, new Date().toISOString())
+      ? calculateDurationMinutes(runningTimer.started_at || new Date().toISOString(), new Date().toISOString())
       : 0;
 
     const completedTotal = (entries || []).reduce((sum, e) => sum + e.duration_minutes, 0);

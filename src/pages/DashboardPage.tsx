@@ -47,11 +47,17 @@ export function DashboardPage() {
       is_billable: p.isBillable,
       is_active: p.status === 'active',
       priority: p.priority,
-      status: p.status,
+      status: p.status as 'active' | 'complete' | 'planning' | 'on-hold',
       health: p.health,
       teamMembers: [], // Would need to fetch from allocations
       created_at: '',
       updated_at: '',
+      // Additional required Project fields
+      aliases: null,
+      archive_reason: null,
+      archived_at: null,
+      legacy_10kft_id: null,
+      parent_id: null,
     }));
   }, [projects, user?.org_id]);
 

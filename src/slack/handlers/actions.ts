@@ -312,7 +312,7 @@ export function registerActions(app: App) {
 
     await client.views.open({
       trigger_id: (body as any).trigger_id,
-      view: buildApprovalDetailModal(confirmation)
+      view: buildApprovalDetailModal(confirmation as any)
     });
   });
 
@@ -505,11 +505,13 @@ export function registerActions(app: App) {
       .eq('id', userId)
       .single();
 
+    if (!user) return;
+
     // Get PMs/admins to notify
     const { data: managers } = await supabase
       .from('users')
       .select('slack_user_id')
-      .eq('org_id', user?.org_id)
+      .eq('org_id', user.org_id)
       .in('role', ['pm', 'admin']);
 
     // Notify managers

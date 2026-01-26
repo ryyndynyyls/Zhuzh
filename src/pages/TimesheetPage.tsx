@@ -64,7 +64,7 @@ export function TimesheetPage() {
         phaseName: alloc.phase?.name,
         plannedHours: alloc.planned_hours,
         actualHours: existingEntry?.actual_hours ?? alloc.planned_hours,
-        notes: existingEntry?.notes
+        notes: existingEntry?.notes ?? undefined
       };
     });
   }, [allocations, confirmation]);
@@ -165,7 +165,7 @@ export function TimesheetPage() {
         weekStart={new Date(weekStart + 'T00:00:00')}
         entries={entries}
         status={confirmation?.status || 'draft'}
-        notes={confirmation?.notes}
+        notes={confirmation?.notes ?? undefined}
         onWeekChange={handleWeekChange}
         onSubmit={handleSubmit}
       />

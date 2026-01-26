@@ -484,10 +484,11 @@ async function showProjectStatus(
     .eq('project_id', projectId);
 
   const hoursUsed = entries?.reduce((sum, e) => sum + (e.actual_hours || 0), 0) || 0;
-  const budgetPct = project.budget_hours > 0 
-    ? Math.round((hoursUsed / project.budget_hours) * 100) 
+  const budgetHours = project.budget_hours ?? 0;
+  const budgetPct = budgetHours > 0
+    ? Math.round((hoursUsed / budgetHours) * 100)
     : 0;
-  const remaining = project.budget_hours - hoursUsed;
+  const remaining = budgetHours - hoursUsed;
 
   let statusEmoji = '🟢';
   if (budgetPct >= 100) statusEmoji = '🔴';
@@ -506,7 +507,7 @@ async function showProjectStatus(
       {
         type: 'section',
         fields: [
-          { type: 'mrkdwn', text: `*Budget:*\n${project.budget_hours}h` },
+          { type: 'mrkdwn', text: `*Budget:*\n${budgetHours}h` },
           { type: 'mrkdwn', text: `*Used:*\n${hoursUsed}h (${budgetPct}%)` },
           { type: 'mrkdwn', text: `*Remaining:*\n${remaining}h` }
         ]
@@ -587,9 +588,8 @@ async function handleTimerStart(
     .single();
 
   if (existingTimer) {
-    const elapsed = Math.floor(
-      (Date.now() - new Date(existingTimer.started_at).getTime()) / 60000
-    );
+    const startedAt = existingTimer.started_at ? new Date(existingTimer.started_at).getTime() : Date.now();
+    const elapsed = Math.floor((Date.now() - startedAt) / 60000);
     await client.chat.postEphemeral({
       channel: channelId,
       user: slackUserId,
@@ -684,9 +684,8 @@ async function handleTimerStop(
 
   // Stop it
   const now = new Date();
-  const durationMinutes = Math.floor(
-    (now.getTime() - new Date(timer.started_at).getTime()) / 60000
-  );
+  const startedAt = timer.started_at ? new Date(timer.started_at).getTime() : now.getTime();
+  const durationMinutes = Math.floor((now.getTime() - startedAt) / 60000);
 
   const combinedNotes = notes
     ? timer.notes ? `${timer.notes}\n${notes}` : notes
@@ -835,9 +834,8 @@ async function handleTimerStatus(
 
   let runningInfo = '';
   if (runningTimer) {
-    const elapsed = Math.floor(
-      (Date.now() - new Date(runningTimer.started_at).getTime()) / 60000
-    );
+    const startedAt = runningTimer.started_at ? new Date(runningTimer.started_at).getTime() : Date.now();
+    const elapsed = Math.floor((Date.now() - startedAt) / 60000);
     runningInfo = `\n\n⏱ *Currently tracking:* ${(runningTimer.project as any)?.name} (${formatDuration(elapsed)})`;
   }
 

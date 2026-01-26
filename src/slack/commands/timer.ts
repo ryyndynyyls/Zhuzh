@@ -158,7 +158,7 @@ export function registerStartTimerCommand(app: App) {
 
     if (existingTimer) {
       const elapsed = Math.floor(
-        (Date.now() - new Date(existingTimer.started_at).getTime()) / 60000
+        (Date.now() - new Date(existingTimer.started_at || Date.now()).getTime()) / 60000
       );
       await respond({ response_type: 'ephemeral',
         
@@ -221,7 +221,7 @@ export function registerStartTimerCommand(app: App) {
         try {
           await client.views.open({
             trigger_id: command.trigger_id,
-            view: buildStartTimerModal(allProjects, channelId),
+            view: buildStartTimerModal(allProjects?.map(p => ({ ...p, color: p.color || '#6B7280' })) || [], channelId),
           });
         } catch (error) {
           console.error('Failed to open start-timer modal:', error);
@@ -345,7 +345,7 @@ export function registerStopTimerCommand(app: App) {
     // Calculate duration
     const now = new Date();
     const durationMinutes = Math.floor(
-      (now.getTime() - new Date(timer.started_at).getTime()) / 60000
+      (now.getTime() - new Date(timer.started_at || now).getTime()) / 60000
     );
 
     // Stop the timer
@@ -512,7 +512,7 @@ export function registerLogTimeCommand(app: App) {
       try {
         await client.views.open({
           trigger_id: command.trigger_id,
-          view: buildLogTimeModal(allProjects, durationMinutes),
+          view: buildLogTimeModal(allProjects?.map(p => ({ ...p, color: p.color || '#6B7280' })) || [], durationMinutes),
         });
       } catch (error) {
         console.error('Failed to open log-time modal:', error);
@@ -620,7 +620,7 @@ export function registerTimeStatusCommand(app: App) {
     let runningInfo = '';
     if (runningTimer) {
       const runningElapsed = Math.floor(
-        (Date.now() - new Date(runningTimer.started_at).getTime()) / 60000
+        (Date.now() - new Date(runningTimer.started_at || Date.now()).getTime()) / 60000
       );
       runningInfo = `\n\n⏱ *Currently tracking:* ${(runningTimer.project as any)?.name} (${formatDuration(runningElapsed)})`;
     }

@@ -34,7 +34,7 @@ import { glowBorderStyles, GLOW_COLORS } from './design-system';
 interface Project {
   id: string;
   name: string;
-  color: string;
+  color: string | null;
   phases?: Array<{ id: string; name: string }>;
 }
 

@@ -497,8 +497,6 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
         <Typography variant="caption" sx={{ color: '#6B7280', display: 'block', textAlign: 'center', mt: 2 }}>
           {isEditable
             ? 'Your timesheet will be reviewed by your PM.'
-            : status === 'rejected'
-            ? 'Please update and resubmit.'
             : 'Contact your PM for any changes.'}
         </Typography>
       </CardContent>

@@ -224,9 +224,8 @@ export function registerTimerActions(app: App) {
 
     // Stop timer
     const now = new Date();
-    const durationMinutes = Math.floor(
-      (now.getTime() - new Date(timer.started_at).getTime()) / 60000
-    );
+    const startedAt = timer.started_at ? new Date(timer.started_at).getTime() : now.getTime();
+    const durationMinutes = Math.floor((now.getTime() - startedAt) / 60000);
 
     const { error: updateError } = await supabase
       .from('time_entries_live')

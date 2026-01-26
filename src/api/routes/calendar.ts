@@ -36,8 +36,8 @@ router.get('/list', async (req, res) => {
     // Get valid tokens (refresh if needed)
     const { tokens, wasRefreshed } = await googleCalendar.getValidTokens(
       user.google_access_token,
-      user.google_refresh_token,
-      new Date(user.google_token_expiry).getTime()
+      user.google_refresh_token || '',
+      user.google_token_expiry ? new Date(user.google_token_expiry).getTime() : 0
     );
 
     // Update tokens if refreshed
@@ -72,7 +72,7 @@ router.get('/events', async (req, res) => {
   const { data: user, error } = await supabase
     .from('users')
     .select('google_access_token, google_refresh_token, google_token_expiry, google_calendar_id')
-    .eq('id', userId)
+    .eq('id', userId as string)
     .single();
 
   if (error || !user?.google_access_token) {
@@ -82,15 +82,15 @@ router.get('/events', async (req, res) => {
   try {
     const { tokens, wasRefreshed } = await googleCalendar.getValidTokens(
       user.google_access_token,
-      user.google_refresh_token,
-      new Date(user.google_token_expiry).getTime()
+      user.google_refresh_token || '',
+      user.google_token_expiry ? new Date(user.google_token_expiry).getTime() : 0
     );
 
     if (wasRefreshed) {
       await supabase.from('users').update({
         google_access_token: tokens.access_token,
         google_token_expiry: new Date(tokens.expiry_date).toISOString(),
-      }).eq('id', userId);
+      }).eq('id', userId as string);
     }
 
     // Parse calendar IDs or use primary
@@ -142,7 +142,7 @@ router.post('/analyze-screenshot', async (req, res) => {
 router.post('/generate-config', async (req, res) => {
   const { orgId, adminDescription, screenshotAnalysis, userId } = req.body;
 
-  console.log('📝 Generate config request:', { orgId, descLength: adminDescription?.length, hasScreenshot: !!screenshotAnalysis });
+  console.log('Generate config request:', { orgId, descLength: adminDescription?.length, hasScreenshot: !!screenshotAnalysis });
 
   if (!orgId || !adminDescription) {
     return res.status(400).json({ error: 'orgId and adminDescription are required' });
@@ -150,18 +150,18 @@ router.post('/generate-config', async (req, res) => {
 
   // Check Gemini API key
   if (!process.env.GEMINI_API_KEY) {
-    console.error('❌ GEMINI_API_KEY not set!');
+    console.error('GEMINI_API_KEY not set!');
     return res.status(500).json({ error: 'Gemini API key not configured' });
   }
-  console.log('✅ GEMINI_API_KEY found');
+  console.log('GEMINI_API_KEY found');
 
   try {
-    console.log('⏳ Calling Gemini...');
+    console.log('Calling Gemini...');
     const config = await gemini.generateCalendarConfig(adminDescription, screenshotAnalysis);
-    console.log('✅ Gemini returned config with confidence:', config.confidence_score);
+    console.log('Gemini returned config with confidence:', config.confidence_score);
 
     // Store in database (created_by is optional for test scenarios)
-    const upsertData: any = {
+    const upsertData: Record<string, unknown> = {
       org_id: orgId,
       pto_detection: config.pto_detection,
       holiday_detection: config.holiday_detection,
@@ -182,7 +182,7 @@ router.post('/generate-config', async (req, res) => {
 
     const { data, error } = await supabase
       .from('org_calendar_config')
-      .upsert(upsertData, { onConflict: 'org_id' })
+      .upsert(upsertData as any, { onConflict: 'org_id' })
       .select()
       .single();
 
@@ -193,10 +193,10 @@ router.post('/generate-config', async (req, res) => {
 
     res.json({ config: data });
 
-  } catch (err: any) {
-    console.error('❌ Config generation failed:', err?.message || err);
-    console.error('   Stack:', err?.stack);
-    res.status(500).json({ error: `Failed to generate configuration: ${err?.message || 'Unknown error'}` });
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+    console.error('Config generation failed:', errorMessage);
+    res.status(500).json({ error: `Failed to generate configuration: ${errorMessage}` });
   }
 });
 
@@ -243,7 +243,7 @@ router.get('/team-pto', async (req, res) => {
     const { data: users, error: usersError } = await supabase
       .from('users')
       .select('id, name, email, google_access_token, google_refresh_token, google_token_expiry, google_calendar_id')
-      .eq('org_id', orgId)
+      .eq('org_id', orgId as string)
       .eq('google_calendar_connected', true);
 
     if (usersError) {
@@ -255,7 +255,7 @@ router.get('/team-pto', async (req, res) => {
     const { data: config } = await supabase
       .from('org_calendar_config')
       .select('*')
-      .eq('org_id', orgId)
+      .eq('org_id', orgId as string)
       .single();
 
     const startDate = new Date(start as string);
@@ -277,8 +277,8 @@ router.get('/team-pto', async (req, res) => {
         // Get valid tokens (refresh if needed)
         const { tokens, wasRefreshed } = await googleCalendar.getValidTokens(
           user.google_access_token,
-          user.google_refresh_token,
-          new Date(user.google_token_expiry).getTime()
+          user.google_refresh_token || '',
+          user.google_token_expiry ? new Date(user.google_token_expiry).getTime() : 0
         );
 
         // Update tokens if refreshed
@@ -352,13 +352,13 @@ router.get('/pto-overlap', async (req, res) => {
     const { data: users } = await supabase
       .from('users')
       .select('id, name, role, google_access_token, google_refresh_token, google_token_expiry, google_calendar_id')
-      .eq('org_id', orgId);
+      .eq('org_id', orgId as string);
 
     // Get org calendar config
     const { data: config } = await supabase
       .from('org_calendar_config')
       .select('*')
-      .eq('org_id', orgId)
+      .eq('org_id', orgId as string)
       .single();
 
     // Collect PTO data
@@ -370,8 +370,8 @@ router.get('/pto-overlap', async (req, res) => {
       try {
         const { tokens, wasRefreshed } = await googleCalendar.getValidTokens(
           user.google_access_token,
-          user.google_refresh_token,
-          new Date(user.google_token_expiry).getTime()
+          user.google_refresh_token || '',
+          user.google_token_expiry ? new Date(user.google_token_expiry).getTime() : 0
         );
 
         if (wasRefreshed) {

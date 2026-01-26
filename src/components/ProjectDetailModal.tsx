@@ -285,7 +285,7 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
             <PhaseBreakdown
               projectId={projectId}
               projectName={project?.name}
-              projectColor={project?.color}
+              projectColor={project?.color ?? undefined}
               userRole={userRole}
               hourlyRate={project?.hourly_rate || undefined}
               defaultExpanded
@@ -295,7 +295,7 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
             <ProjectDrillDown
               projectId={projectId}
               projectName={project?.name}
-              projectColor={project?.color}
+              projectColor={project?.color ?? undefined}
               userRole={userRole}
               weeksBack={12}
               defaultExpanded

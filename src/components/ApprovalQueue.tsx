@@ -281,7 +281,7 @@ export const ApprovalQueue: React.FC<ApprovalQueueProps> = ({
 
       {/* Stats Cards */}
       <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={4}>
+        <Grid size={{ xs: 12, sm: 4 }}>
           <StatsCard
             title="Pending Approvals"
             value={stats.pending}
@@ -290,7 +290,7 @@ export const ApprovalQueue: React.FC<ApprovalQueueProps> = ({
             bgColor="rgba(255, 135, 49, 0.15)"
           />
         </Grid>
-        <Grid item xs={12} sm={4}>
+        <Grid size={{ xs: 12, sm: 4 }}>
           <StatsCard
             title="Approved Today"
             value={stats.approvedToday}
@@ -299,7 +299,7 @@ export const ApprovalQueue: React.FC<ApprovalQueueProps> = ({
             bgColor="rgba(128, 255, 156, 0.15)"
           />
         </Grid>
-        <Grid item xs={12} sm={4}>
+        <Grid size={{ xs: 12, sm: 4 }}>
           <StatsCard
             title="Flagged"
             value={stats.flagged}
@@ -342,7 +342,7 @@ export const ApprovalQueue: React.FC<ApprovalQueueProps> = ({
 
           <Grid container spacing={2} alignItems="flex-end">
             {/* Search */}
-            <Grid item xs={12} md={3}>
+            <Grid size={{ xs: 12, md: 3 }}>
               <TextField
                 fullWidth
                 size="small"
@@ -374,7 +374,7 @@ export const ApprovalQueue: React.FC<ApprovalQueueProps> = ({
             </Grid>
 
             {/* Employee Filter */}
-            <Grid item xs={12} sm={6} md={2}>
+            <Grid size={{ xs: 12, sm: 6, md: 2 }}>
               <FormControl fullWidth size="small">
                 <Select
                   value={selectedEmployee}
@@ -413,7 +413,7 @@ export const ApprovalQueue: React.FC<ApprovalQueueProps> = ({
             </Grid>
 
             {/* Date Range Start */}
-            <Grid item xs={6} sm={3} md={2}>
+            <Grid size={{ xs: 6, sm: 3, md: 2 }}>
               <TextField
                 fullWidth
                 size="small"
@@ -442,7 +442,7 @@ export const ApprovalQueue: React.FC<ApprovalQueueProps> = ({
             </Grid>
 
             {/* Date Range End */}
-            <Grid item xs={6} sm={3} md={2}>
+            <Grid size={{ xs: 6, sm: 3, md: 2 }}>
               <TextField
                 fullWidth
                 size="small"
@@ -471,7 +471,7 @@ export const ApprovalQueue: React.FC<ApprovalQueueProps> = ({
             </Grid>
 
             {/* Flagged Only */}
-            <Grid item xs={12} md={3}>
+            <Grid size={{ xs: 12, md: 3 }}>
               <FormControlLabel
                 control={
                   <Checkbox

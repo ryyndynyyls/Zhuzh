@@ -4,7 +4,7 @@ import type {
   AllocationRow,
   TimeConfirmationRow,
   TimeEntryRow,
-  PtoEntryRow
+  PtoEntry
 } from '../types/database';
 
 // ============================================
@@ -20,7 +20,7 @@ export async function getProjects(filters?: {
     .from('projects')
     .select('*, client:clients(id, name), phases:project_phases(*)');
 
-  if (filters?.status) query = query.eq('status', filters.status);
+  if (filters?.status) query = query.eq('status', filters.status as 'active' | 'complete' | 'planning' | 'on-hold');
   if (filters?.clientId) query = query.eq('client_id', filters.clientId);
   if (filters?.isActive !== undefined) query = query.eq('is_active', filters.isActive);
 
@@ -48,7 +48,7 @@ export async function getProjectBudgetSummary() {
   return data;
 }
 
-export async function createProject(project: Partial<ProjectRow>) {
+export async function createProject(project: Partial<ProjectRow> & { name: string; org_id: string }) {
   const { data, error } = await supabase
     .from('projects')
     .insert(project)
@@ -87,7 +87,7 @@ export async function getAllocations(weekStart: string, userId?: string, project
   return data;
 }
 
-export async function createAllocation(allocation: Partial<AllocationRow>) {
+export async function createAllocation(allocation: Partial<AllocationRow> & { week_start: string; planned_hours: number; project_id: string; user_id: string }) {
   const { data, error } = await supabase
     .from('allocations')
     .insert(allocation)
@@ -281,7 +281,7 @@ export async function getPtoEntries(weekStart: string, userId?: string) {
   return data;
 }
 
-export async function createPtoEntry(entry: Partial<PtoEntryRow>) {
+export async function createPtoEntry(entry: Partial<PtoEntry> & { date: string; user_id: string }) {
   const { data, error } = await supabase
     .from('pto_entries')
     .insert(entry)

@@ -16,7 +16,7 @@ export function useCurrentUser() {
         const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
 
         if (authError) throw authError;
-        if (!authUser) {
+        if (!authUser || !authUser.email) {
           setUser(null);
           return;
         }
