@@ -33,6 +33,8 @@ import {
 } from '@mui/icons-material';
 import { ZhuzhSectionLoader } from '../ZhuzhPageLoader';
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3002';
+
 interface PersonSummary {
   person_id: number;
   person_name: string;
@@ -111,7 +113,7 @@ export const PersonSummaryReport: React.FC = () => {
         params.append('department', departmentFilter);
       }
 
-      const response = await fetch(`/api/reports/people?${params}`);
+      const response = await fetch(`${API_BASE}/api/reports/people?${params}`);
       const result: PeopleSummaryResponse = await response.json();
 
       if (result.success) {
@@ -132,7 +134,7 @@ export const PersonSummaryReport: React.FC = () => {
     setDetailsLoading(true);
 
     try {
-      const response = await fetch(`/api/reports/person/${personId}`);
+      const response = await fetch(`${API_BASE}/api/reports/person/${personId}`);
       const result: PersonDetailResponse = await response.json();
 
       if (result.success) {

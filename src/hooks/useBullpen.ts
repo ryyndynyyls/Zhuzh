@@ -5,6 +5,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { User } from '../types/database';
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3002';
+
 interface FreelancerProject {
   id: string;
   name: string;
@@ -27,7 +29,7 @@ export function useBullpen(orgId: string | undefined) {
     if (!orgId) return;
     
     try {
-      const response = await fetch(`/api/team/bullpen?orgId=${orgId}`);
+      const response = await fetch(`${API_BASE}/api/team/bullpen?orgId=${orgId}`);
       const json = await response.json();
       
       if (json.error) {
@@ -46,7 +48,7 @@ export function useBullpen(orgId: string | undefined) {
     if (!orgId) return;
     
     try {
-      const response = await fetch(`/api/team/roster?orgId=${orgId}`);
+      const response = await fetch(`${API_BASE}/api/team/roster?orgId=${orgId}`);
       const json = await response.json();
       
       if (json.error) {
@@ -63,7 +65,7 @@ export function useBullpen(orgId: string | undefined) {
   // Fetch past projects for a freelancer
   const fetchProjects = useCallback(async (userId: string): Promise<FreelancerProject[]> => {
     try {
-      const response = await fetch(`/api/team/bullpen/${userId}/projects`);
+      const response = await fetch(`${API_BASE}/api/team/bullpen/${userId}/projects`);
       const json = await response.json();
       
       if (json.error) {
@@ -80,7 +82,7 @@ export function useBullpen(orgId: string | undefined) {
   // Move freelancer to active roster
   const activateFreelancer = useCallback(async (userId: string) => {
     try {
-      const response = await fetch(`/api/team/${userId}/activate`, {
+      const response = await fetch(`${API_BASE}/api/team/${userId}/activate`, {
         method: 'PATCH',
       });
       const json = await response.json();
@@ -101,7 +103,7 @@ export function useBullpen(orgId: string | undefined) {
   // Move user to bullpen (deactivate)
   const deactivateUser = useCallback(async (userId: string) => {
     try {
-      const response = await fetch(`/api/team/${userId}/deactivate`, {
+      const response = await fetch(`${API_BASE}/api/team/${userId}/deactivate`, {
         method: 'PATCH',
       });
       const json = await response.json();
@@ -122,7 +124,7 @@ export function useBullpen(orgId: string | undefined) {
   // Update freelancer profile
   const updateFreelancer = useCallback(async (userId: string, updates: Partial<User>) => {
     try {
-      const response = await fetch(`/api/team/${userId}`, {
+      const response = await fetch(`${API_BASE}/api/team/${userId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates),

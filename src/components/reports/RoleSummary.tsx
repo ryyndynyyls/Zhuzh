@@ -32,6 +32,8 @@ import {
 } from '@mui/icons-material';
 import { ZhuzhSectionLoader } from '../ZhuzhPageLoader';
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3002';
+
 interface RoleSummary {
   role_id: number;
   role_name: string;
@@ -104,7 +106,7 @@ export const RoleSummaryReport: React.FC = () => {
     setError(null);
 
     try {
-      const response = await fetch('/api/reports/roles');
+      const response = await fetch(`${API_BASE}/api/reports/roles`);
       const result: RolesSummaryResponse = await response.json();
 
       if (result.success) {
@@ -125,7 +127,7 @@ export const RoleSummaryReport: React.FC = () => {
     setDetailsLoading(true);
 
     try {
-      const response = await fetch(`/api/reports/role/${roleId}`);
+      const response = await fetch(`${API_BASE}/api/reports/role/${roleId}`);
       const result: RoleDetailResponse = await response.json();
 
       if (result.success) {

@@ -39,10 +39,30 @@ const app = express();
 app.use(helmet());
 
 // CORS configuration
+const allowedOrigins = process.env.NODE_ENV === 'production'
+  ? [
+      'https://zhuzh.app',
+      'https://app.zhuzh.app',
+      process.env.APP_URL, // Railway web app URL
+    ].filter(Boolean) as string[]
+  : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:5173'];
+
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production'
-    ? ['https://zhuzh.app', 'https://app.zhuzh.app']
-    : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:5173'],
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, curl, etc)
+    if (!origin) return callback(null, true);
+    
+    // Check if origin matches allowed list or Railway pattern
+    if (
+      allowedOrigins.includes(origin) ||
+      origin.includes('.railway.app') ||
+      origin.includes('.up.railway.app')
+    ) {
+      return callback(null, true);
+    }
+    
+    callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -126,10 +146,23 @@ app.post('/api/admin/fix-ryan-org', async (req, res) => {
 });
 
 // ============================================================
+// HEALTH CHECK
+// ============================================================
+
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    version: '1.0.0',
+    service: 'zhuzh-api',
+  });
+});
+
+// ============================================================
 // START SERVER
 // ============================================================
 
-const PORT = process.env.API_PORT || 3002;
+const PORT = process.env.PORT || process.env.API_PORT || 3002;
 
 app.listen(PORT, () => {
   console.log(`🗓️  Zhuzh API server running on port ${PORT}`);

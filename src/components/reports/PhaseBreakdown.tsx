@@ -32,6 +32,8 @@ import {
 } from '@mui/icons-material';
 import { ZhuzhSectionLoader } from '../ZhuzhPageLoader';
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3002';
+
 interface PhaseMetrics {
   phase_id: number;
   phase_name: string;
@@ -113,7 +115,7 @@ export const PhaseBreakdown: React.FC = () => {
         params.append('status', statusFilter);
       }
 
-      const response = await fetch(`/api/reports/phases?${params}`);
+      const response = await fetch(`${API_BASE}/api/reports/phases?${params}`);
       const result: PhaseReportResponse = await response.json();
 
       if (result.success) {

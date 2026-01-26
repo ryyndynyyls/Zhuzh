@@ -40,7 +40,7 @@ interface AvailableProject {
   budget_hours: number;
 }
 
-const API_BASE = 'http://localhost:3002';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3002';
 
 export function useSubProjects(projectId: string | undefined) {
   const [subProjects, setSubProjects] = useState<SubProjectStats[]>([]);
