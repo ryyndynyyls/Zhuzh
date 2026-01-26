@@ -1,6 +1,6 @@
 # ResourceFlow (Zhuzh) Session Status
-**Updated:** 2026-01-26 (Evening)
-**Current Focus:** GitHub Setup & Production Deployment 🚀
+**Updated:** 2026-01-26 (Night)
+**Current Focus:** Railway Deployment Ready 🚀
 
 ---
 
@@ -29,14 +29,22 @@
 - ✅ `package.json` ready
 - ✅ Supabase database live
 
-**Need to Do:**
-- [ ] Initialize git repository
-- [ ] Create GitHub repo (private)
-- [ ] Push code to GitHub
-- [ ] Connect Vercel to GitHub
-- [ ] Set environment variables in Vercel
-- [ ] Deploy and verify
-- [ ] Share URL with Michelle, Maleno, Kara, Levi
+**Completed This Session:**
+- [x] Initialize git repository
+- [x] Create GitHub repo (private) — https://github.com/ryyndynyyls/Zhuzh
+- [x] Push code to GitHub
+- [x] Add Railway deployment guide (`docs/RAILWAY_DEPLOYMENT.md`)
+- [x] Fix API URL consistency across all hooks/components
+- [x] Add health check endpoint (`/api/health`)
+- [x] Update CORS for Railway domains
+
+**Ready for Ryan:**
+- [ ] Connect Railway to GitHub
+- [ ] Create 3 services (web, api, slack)
+- [ ] Set environment variables
+- [ ] Generate public URLs
+- [ ] Update Slack app with new URLs
+- [ ] Share with team
 
 ### Environment Variables Needed for Vercel
 
