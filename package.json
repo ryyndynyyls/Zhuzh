@@ -1,6 +1,6 @@
 {
   "name": "resourceflow",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "**Slack-First Resourcing & Budget Tracker for Use All Five**",
   "main": "index.js",
   "directories": {
