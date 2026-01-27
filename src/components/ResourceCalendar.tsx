@@ -31,6 +31,8 @@ import AddIcon from '@mui/icons-material/Add';
 import TodayIcon from '@mui/icons-material/Today';
 import WarningIcon from '@mui/icons-material/Warning';
 import BeachAccessIcon from '@mui/icons-material/BeachAccess';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import Snackbar from '@mui/material/Snackbar';
 import {
   useResourceCalendar,
   CalendarAllocation,
@@ -573,11 +575,19 @@ export function ResourceCalendar({
     error,
     createAllocation,
     updateAllocation,
+    repeatLastWeek,
   } = useResourceCalendar({
     orgId,
     startDate,
     weeksToShow,
     viewMode,
+  });
+
+  // Snackbar state for Repeat Last Week feedback
+  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'info' | 'error' }>({
+    open: false,
+    message: '',
+    severity: 'success',
   });
 
   // Group users by discipline, sorted alphabetically within each group
@@ -744,6 +754,54 @@ export function ResourceCalendar({
               : `${formatWeekLabel(weeks[0])} — ${formatWeekLabel(weeks[weeks.length - 1])}`
             }
           </Typography>
+
+          {/* Repeat Last Week button - only show for week view and managers */}
+          {viewMode === 'week' && currentUserRole !== 'employee' && weeks.length > 0 && (
+            <Tooltip title="Copy last week's allocations to current view">
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<ContentCopyIcon />}
+                onClick={async () => {
+                  try {
+                    // Use the first week in view as target
+                    const targetWeek = weeks[0];
+                    const count = await repeatLastWeek(targetWeek, currentUserId);
+                    if (count === 0) {
+                      setSnackbar({
+                        open: true,
+                        message: 'No allocations to copy (previous week empty or all already exist)',
+                        severity: 'info',
+                      });
+                    } else {
+                      setSnackbar({
+                        open: true,
+                        message: `Copied ${count} allocation${count === 1 ? '' : 's'} from last week`,
+                        severity: 'success',
+                      });
+                    }
+                  } catch (err) {
+                    console.error('Repeat Last Week failed:', err);
+                    setSnackbar({
+                      open: true,
+                      message: 'Failed to copy allocations',
+                      severity: 'error',
+                    });
+                  }
+                }}
+                sx={{
+                  color: 'text.secondary',
+                  borderColor: 'divider',
+                  '&:hover': {
+                    borderColor: 'primary.main',
+                    bgcolor: 'action.hover',
+                  },
+                }}
+              >
+                Repeat Last Week
+              </Button>
+            </Tooltip>
+          )}
         </Stack>
       </Stack>
       
@@ -888,6 +946,14 @@ export function ResourceCalendar({
           projects={projects}
         />
       )}
+
+      {/* Snackbar for feedback */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        message={snackbar.message}
+      />
     </Box>
   );
 }

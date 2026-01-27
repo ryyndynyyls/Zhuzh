@@ -437,6 +437,11 @@ export const ApprovalQueue: React.FC<ApprovalQueueProps> = ({
                     '&:hover fieldset': { borderColor: '#4B5563' },
                     '&.Mui-focused fieldset': { borderColor: '#FF8731' },
                   },
+                  // Fix calendar icon contrast for ADA compliance
+                  '& input[type="date"]::-webkit-calendar-picker-indicator': {
+                    filter: 'invert(1)',
+                    cursor: 'pointer',
+                  },
                 }}
               />
             </Grid>
@@ -465,6 +470,11 @@ export const ApprovalQueue: React.FC<ApprovalQueueProps> = ({
                     '& fieldset': { borderColor: '#374151' },
                     '&:hover fieldset': { borderColor: '#4B5563' },
                     '&.Mui-focused fieldset': { borderColor: '#FF8731' },
+                  },
+                  // Fix calendar icon contrast for ADA compliance
+                  '& input[type="date"]::-webkit-calendar-picker-indicator': {
+                    filter: 'invert(1)',
+                    cursor: 'pointer',
                   },
                 }}
               />

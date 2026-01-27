@@ -101,13 +101,18 @@ export const BudgetCard: React.FC<BudgetCardProps> = ({ project, userRole, onCli
   // Determine what to display based on role
   const showDollars = userRole === 'pm' || userRole === 'admin';
 
-  const budgetDisplay = showDollars
-    ? formatCurrency(budgetDollars)
-    : `${project.budgetHours} hrs`;
+  // Handle case where budget is 0 (no budget set)
+  const hasBudget = project.budgetHours > 0;
+
+  const budgetDisplay = !hasBudget
+    ? 'No budget set'
+    : showDollars
+      ? formatCurrency(budgetDollars)
+      : `${project.budgetHours} hrs`;
 
   const burnedDisplay = showDollars
     ? formatCurrency(burnedDollars)
-    : `${project.burnedHours} hrs`;
+    : `${project.burnedHours.toFixed(1)} hrs`;
 
   const cardContent = (
     <CardContent sx={{ p: 2.5 }}>
@@ -186,36 +191,50 @@ export const BudgetCard: React.FC<BudgetCardProps> = ({ project, userRole, onCli
       </Box>
 
       {/* Budget info */}
-      <Stack 
-        direction="row" 
-        justifyContent="space-between" 
+      <Stack
+        direction="row"
+        justifyContent="space-between"
         alignItems="center"
         flexWrap="wrap"
         gap={1.5}
         mt={1}
       >
-        <Typography 
-          variant="body2" 
-          color="text.secondary" 
-          sx={{ whiteSpace: 'nowrap', fontSize: '0.8rem' }}
-        >
-          {burnedDisplay} of {budgetDisplay}
-        </Typography>
         <Typography
           variant="body2"
-          fontWeight={600}
-          sx={{
-            whiteSpace: 'nowrap',
-            fontSize: '0.85rem',
-            color: status === 'on-track'
-              ? '#80FF9C'
-              : status === 'at-risk'
-                ? '#FFF845'
-                : '#FF6B6B',
-          }}
+          color="text.secondary"
+          sx={{ whiteSpace: 'nowrap', fontSize: '0.8rem' }}
         >
-          {Math.round(percent)}% burned
+          {hasBudget ? `${burnedDisplay} of ${budgetDisplay}` : `${burnedDisplay} logged`}
         </Typography>
+        {hasBudget ? (
+          <Typography
+            variant="body2"
+            fontWeight={600}
+            sx={{
+              whiteSpace: 'nowrap',
+              fontSize: '0.85rem',
+              color: status === 'on-track'
+                ? '#80FF9C'
+                : status === 'at-risk'
+                  ? '#FFF845'
+                  : '#FF6B6B',
+            }}
+          >
+            {Math.round(percent)}% burned
+          </Typography>
+        ) : (
+          <Typography
+            variant="body2"
+            sx={{
+              whiteSpace: 'nowrap',
+              fontSize: '0.8rem',
+              color: '#9CA3AF',
+              fontStyle: 'italic',
+            }}
+          >
+            No budget set
+          </Typography>
+        )}
       </Stack>
 
       {/* Status badge */}

@@ -116,6 +116,41 @@ export async function deleteAllocation(id: string) {
   if (error) throw error;
 }
 
+/**
+ * Bulk create allocations (for Repeat Last Week feature)
+ */
+export async function bulkCreateAllocations(
+  allocations: Array<Partial<AllocationRow> & { week_start: string; planned_hours: number; project_id: string; user_id: string }>
+) {
+  if (allocations.length === 0) return [];
+
+  const { data, error } = await supabase
+    .from('allocations')
+    .insert(allocations)
+    .select();
+  if (error) throw error;
+  return data;
+}
+
+/**
+ * Get allocations for a specific week (for copying)
+ */
+export async function getAllocationsForWeek(weekStart: string, orgId?: string) {
+  let query = supabase
+    .from('allocations')
+    .select('*, project:projects(id, name, color, org_id), phase:project_phases(id, name), user:users(id, name, org_id)')
+    .eq('week_start', weekStart);
+
+  // If orgId provided, filter by projects in that org
+  if (orgId) {
+    query = query.eq('project.org_id', orgId);
+  }
+
+  const { data, error } = await query;
+  if (error) throw error;
+  return data;
+}
+
 // ============================================
 // CONFIRMATIONS
 // ============================================

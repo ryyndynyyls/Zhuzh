@@ -4,8 +4,9 @@
  * Supports day/week/month view modes
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { supabase } from '../lib/supabase';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 
 export type ViewMode = 'day' | 'week' | 'month';
 
@@ -179,6 +180,9 @@ export function useResourceCalendar(options: UseResourceCalendarOptions) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
+  // Realtime subscription ref
+  const channelRef = useRef<RealtimeChannel | null>(null);
+
   // Generate columns and weeks to fetch based on view mode
   const { columns, weeksToFetch, columnsCount } = useMemo(() => {
     return getDateRangeForView(startDate, viewMode);
@@ -256,6 +260,44 @@ export function useResourceCalendar(options: UseResourceCalendarOptions) {
   
   useEffect(() => {
     fetchData();
+  }, [fetchData]);
+
+  // Set up Supabase Realtime subscription for allocations
+  useEffect(() => {
+    // Clean up previous subscription
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+    }
+
+    // Subscribe to allocation changes
+    const channel = supabase
+      .channel('allocations-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: 'allocations',
+        },
+        (payload) => {
+          console.log('📡 Allocation change detected:', payload.eventType);
+          // Refetch data when any allocation changes
+          fetchData();
+        }
+      )
+      .subscribe((status) => {
+        console.log('📡 Allocations realtime status:', status);
+      });
+
+    channelRef.current = channel;
+
+    // Cleanup on unmount
+    return () => {
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+    };
   }, [fetchData]);
   
   // Build the grid data structure
@@ -398,12 +440,80 @@ export function useResourceCalendar(options: UseResourceCalendarOptions) {
     await updateAllocation(id, {
       weekStart: newWeekStart,
     });
-    
+
     // Note: Moving to a different user requires a delete + create due to the user_id column
     // For now, we only support moving to different weeks for the same user
     // Full drag-and-drop to different users would need additional logic
   };
-  
+
+  /**
+   * Repeat Last Week - Copy all allocations from the previous week to the target week
+   * @param targetWeekStart - The week to copy allocations TO
+   * @param createdBy - User ID of who is creating these allocations
+   * @returns Number of allocations created
+   */
+  const repeatLastWeek = async (targetWeekStart: string, createdBy: string): Promise<number> => {
+    // Calculate previous week
+    const targetDate = new Date(targetWeekStart + 'T00:00:00');
+    const prevDate = new Date(targetDate);
+    prevDate.setDate(prevDate.getDate() - 7);
+    const prevWeekStart = prevDate.toISOString().split('T')[0];
+
+    console.log(`📋 Repeat Last Week: Copying from ${prevWeekStart} to ${targetWeekStart}`);
+
+    // Get allocations from previous week
+    const { data: prevAllocations, error: fetchError } = await supabase
+      .from('allocations')
+      .select('user_id, project_id, phase_id, planned_hours, is_billable, notes')
+      .eq('week_start', prevWeekStart);
+
+    if (fetchError) throw fetchError;
+    if (!prevAllocations || prevAllocations.length === 0) {
+      console.log('📋 No allocations found in previous week');
+      return 0;
+    }
+
+    // Check for existing allocations in target week to avoid duplicates
+    const { data: existingAllocations } = await supabase
+      .from('allocations')
+      .select('user_id, project_id, phase_id')
+      .eq('week_start', targetWeekStart);
+
+    const existingKeys = new Set(
+      (existingAllocations || []).map(a => `${a.user_id}-${a.project_id}-${a.phase_id || 'null'}`)
+    );
+
+    // Filter out allocations that already exist in target week
+    const newAllocations = prevAllocations
+      .filter(a => !existingKeys.has(`${a.user_id}-${a.project_id}-${a.phase_id || 'null'}`))
+      .map(a => ({
+        user_id: a.user_id,
+        project_id: a.project_id,
+        phase_id: a.phase_id,
+        week_start: targetWeekStart,
+        planned_hours: a.planned_hours,
+        is_billable: a.is_billable ?? true,
+        notes: a.notes,
+        created_by: createdBy,
+      }));
+
+    if (newAllocations.length === 0) {
+      console.log('📋 All allocations already exist in target week');
+      return 0;
+    }
+
+    // Bulk insert
+    const { error: insertError } = await supabase
+      .from('allocations')
+      .insert(newAllocations);
+
+    if (insertError) throw insertError;
+
+    console.log(`📋 Created ${newAllocations.length} allocations`);
+    await fetchData();
+    return newAllocations.length;
+  };
+
   return {
     users,
     weeks,
@@ -418,5 +528,6 @@ export function useResourceCalendar(options: UseResourceCalendarOptions) {
     updateAllocation,
     deleteAllocation,
     moveAllocation,
+    repeatLastWeek,
   };
 }

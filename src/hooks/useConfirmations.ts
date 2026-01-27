@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabase';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 import type { TimeConfirmationRow, TimeEntryRow, UserRow } from '../types/database';
 
 interface TimeEntryWithRelations extends TimeEntryRow {
@@ -124,6 +125,9 @@ export function usePendingApprovals(orgId: string) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
+  // Realtime subscription ref
+  const channelRef = useRef<RealtimeChannel | null>(null);
+
   const fetchApprovals = useCallback(async (isInitialLoad = false) => {
     if (!orgId) {
       setApprovals([]);
@@ -156,6 +160,46 @@ export function usePendingApprovals(orgId: string) {
   useEffect(() => {
     fetchApprovals(true); // Initial load shows spinner
   }, [fetchApprovals]);
+
+  // Set up Supabase Realtime subscription for time_confirmations
+  useEffect(() => {
+    if (!orgId) return;
+
+    // Clean up previous subscription
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+    }
+
+    // Subscribe to time_confirmations changes (new submissions, approvals, rejections)
+    const channel = supabase
+      .channel('approvals-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: 'time_confirmations',
+        },
+        (payload) => {
+          console.log('📡 Approval change detected:', payload.eventType);
+          // Refetch data when any confirmation changes
+          fetchApprovals(false); // Don't show loading spinner
+        }
+      )
+      .subscribe((status) => {
+        console.log('📡 Approvals realtime status:', status);
+      });
+
+    channelRef.current = channel;
+
+    // Cleanup on unmount
+    return () => {
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+    };
+  }, [orgId, fetchApprovals]);
 
   const approveConfirmation = async (id: string, approverId: string) => {
     const res = await fetch(`${API_BASE}/api/approvals/${id}/approve`, {

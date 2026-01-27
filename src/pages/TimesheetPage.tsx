@@ -7,6 +7,7 @@ import ConfirmModal from '../components/ConfirmModal';
 import { EmptyState } from '../components/EmptyState';
 import { useAllocations } from '../hooks/useAllocations';
 import { useConfirmation } from '../hooks/useConfirmations';
+import { useProjects } from '../hooks/useProjects';
 import { useAuth } from '../contexts/AuthContext';
 import { safeCelebrate } from '../utils/celebrations';
 
@@ -42,13 +43,26 @@ export function TimesheetPage() {
     submitConfirmation
   } = useConfirmation(user?.id, weekStart);
 
+  // Fetch all active projects for unplanned work modal
+  const { projects: allProjects, loading: projectsLoading } = useProjects({ isActive: true });
+
+  // Transform projects to format expected by ConfirmModal
+  const projectsForUnplannedWork = useMemo(() => {
+    return allProjects.map(p => ({
+      id: p.id,
+      name: p.name,
+      color: p.color || '#6B7280',
+      phases: p.phases?.map(ph => ({ id: ph.id, name: ph.name })) || []
+    }));
+  }, [allProjects]);
+
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
     open: false,
     message: '',
     severity: 'success'
   });
 
-  const loading = allocationsLoading || confirmationLoading;
+  const loading = allocationsLoading || confirmationLoading || projectsLoading;
   const error = allocationsError || confirmationError;
 
   // Transform allocations to entries format
@@ -166,6 +180,7 @@ export function TimesheetPage() {
         entries={entries}
         status={confirmation?.status || 'draft'}
         notes={confirmation?.notes ?? undefined}
+        projects={projectsForUnplannedWork}
         onWeekChange={handleWeekChange}
         onSubmit={handleSubmit}
       />

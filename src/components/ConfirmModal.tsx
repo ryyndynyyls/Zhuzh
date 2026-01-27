@@ -47,6 +47,7 @@ interface ConfirmModalProps {
   entries: TimeEntryData[];
   status: ConfirmationStatus;
   notes?: string;
+  projects?: ProjectData[]; // All active projects for unplanned work
   onWeekChange: (date: Date) => void;
   onSubmit: (entries: Array<{ id: string; actualHours: number }>, notes?: string) => void;
 }
@@ -59,11 +60,8 @@ const STATUS_COLORS: Record<ConfirmationStatus, { bg: string; text: string; labe
   rejected: { bg: '#FF6B6B', text: '#FFFFFF', label: 'Rejected' },
 };
 
-// Mock projects for unplanned work modal
-const MOCK_PROJECTS: ProjectData[] = [
-  { id: 'google-cloud', name: 'Google Cloud UX', color: '#4285F4', phases: [{ id: 'design', name: 'Design' }, { id: 'dev', name: 'Development' }] },
-  { id: 'patina', name: 'Patina', color: '#80FF9C', phases: [{ id: 'dev', name: 'Development' }] },
-  { id: 'google-retail', name: 'Google Retail', color: '#8B5CF6' },
+// Fallback projects if none provided (shouldn't happen in production)
+const FALLBACK_PROJECTS: ProjectData[] = [
   { id: 'internal', name: 'Internal/Admin', color: '#6B7280' },
 ];
 
@@ -84,9 +82,12 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
   entries: initialEntries,
   status,
   notes: initialNotes,
+  projects = FALLBACK_PROJECTS,
   onWeekChange,
   onSubmit,
 }) => {
+  // Use provided projects for unplanned work modal
+  const availableProjects = projects.length > 0 ? projects : FALLBACK_PROJECTS;
   // Local state for editing
   const [localEntries, setLocalEntries] = useState<TimeEntryData[]>(initialEntries);
   const [localNotes, setLocalNotes] = useState(initialNotes || '');
@@ -138,7 +139,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
     description: string;
     tags: string[];
   }) => {
-    const project = MOCK_PROJECTS.find(p => p.id === data.projectId);
+    const project = availableProjects.find(p => p.id === data.projectId);
     if (!project) return;
 
     const phase = project.phases?.find(p => p.id === data.phaseId);
@@ -249,7 +250,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
 
         <AddUnplannedWorkModal
           open={unplannedModalOpen}
-          projects={MOCK_PROJECTS}
+          projects={availableProjects}
           onClose={() => setUnplannedModalOpen(false)}
           onAdd={handleAddUnplannedWork}
         />

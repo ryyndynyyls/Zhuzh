@@ -8,6 +8,9 @@ import * as googleCalendar from '../../lib/google-calendar';
 
 const router = Router();
 
+// Get base URL for redirects (production or local)
+const getAppUrl = () => process.env.APP_URL || 'http://localhost:3001';
+
 /**
  * Initiate Google OAuth flow
  * GET /api/auth/google?userId=xxx
@@ -50,11 +53,11 @@ router.get('/google/callback', async (req, res) => {
 
   if (oauthError) {
     console.error('Google OAuth error:', oauthError);
-    return res.redirect('http://localhost:3001/settings?error=google_oauth_denied');
+    return res.redirect(`${getAppUrl()}/settings?error=google_oauth_denied`);
   }
 
   if (!code || !state) {
-    return res.redirect('http://localhost:3001/settings?error=missing_params');
+    return res.redirect(`${getAppUrl()}/settings?error=missing_params`);
   }
 
   try {
@@ -64,7 +67,7 @@ router.get('/google/callback', async (req, res) => {
 
     // Check state is not too old (10 minutes)
     if (Date.now() - timestamp > 10 * 60 * 1000) {
-      return res.redirect('http://localhost:3001/settings?error=state_expired');
+      return res.redirect(`${getAppUrl()}/settings?error=state_expired`);
     }
 
     // Exchange code for tokens
@@ -89,17 +92,17 @@ router.get('/google/callback', async (req, res) => {
 
     if (updateError) {
       console.error('Failed to store tokens:', updateError);
-      return res.redirect('http://localhost:3001/settings?error=storage_failed');
+      return res.redirect(`${getAppUrl()}/settings?error=storage_failed`);
     }
 
     console.log(`✅ Google Calendar connected for user ${userId}`);
     console.log(`   Found ${calendars.length} calendars`);
 
-    res.redirect('http://localhost:3001/settings?calendar=connected');
+    res.redirect(`${getAppUrl()}/settings?calendar=connected`);
 
   } catch (err) {
     console.error('Google OAuth callback error:', err);
-    res.redirect('http://localhost:3001/settings?error=callback_failed');
+    res.redirect(`${getAppUrl()}/settings?error=callback_failed`);
   }
 });
 
