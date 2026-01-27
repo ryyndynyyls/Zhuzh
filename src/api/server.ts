@@ -149,14 +149,18 @@ app.post('/api/admin/fix-ryan-org', async (req, res) => {
 // HEALTH CHECK
 // ============================================================
 
-app.get('/api/health', (req, res) => {
-  res.json({
-    status: 'healthy',
-    timestamp: new Date().toISOString(),
-    version: '1.0.0',
-    service: 'zhuzh-api',
-  });
+const healthResponse = () => ({
+  status: 'healthy',
+  timestamp: new Date().toISOString(),
+  version: '1.0.0',
+  service: 'zhuzh-api',
 });
+
+// Root health check (for Railway/load balancers)
+app.get('/health', (req, res) => res.json(healthResponse()));
+
+// API-prefixed health check
+app.get('/api/health', (req, res) => res.json(healthResponse()));
 
 // ============================================================
 // START SERVER
