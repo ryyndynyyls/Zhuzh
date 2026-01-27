@@ -327,7 +327,6 @@ router.get('/:userId/allocations', async (req: Request, res: Response) => {
           name,
           color,
           budget_hours,
-          budget_amount,
           clients (name)
         )
       `)

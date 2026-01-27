@@ -3,7 +3,7 @@
  * Visual grid showing team allocations by week
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   Box,
   Paper,
@@ -32,6 +32,7 @@ import TodayIcon from '@mui/icons-material/Today';
 import WarningIcon from '@mui/icons-material/Warning';
 import BeachAccessIcon from '@mui/icons-material/BeachAccess';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import DragHandleIcon from '@mui/icons-material/DragHandle';
 import Snackbar from '@mui/material/Snackbar';
 import {
   useResourceCalendar,
@@ -110,14 +111,26 @@ function isCurrentWeek(dateStr: string, viewMode: ViewMode = 'month'): boolean {
 
 /**
  * Allocation block within a cell
+ * Includes a drag handle on the right edge for extending to future weeks
  */
 function AllocationBlock({
   allocation,
   onClick,
+  onDragExtendStart,
+  isReadOnly = false,
 }: {
   allocation: CalendarAllocation;
   onClick?: () => void;
+  onDragExtendStart?: (allocation: CalendarAllocation) => void;
+  isReadOnly?: boolean;
 }) {
+  const [isHovered, setIsHovered] = useState(false);
+
+  const handleDragHandleMouseDown = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Don't trigger onClick
+    onDragExtendStart?.(allocation);
+  };
+
   return (
     <Tooltip
       title={
@@ -132,12 +145,19 @@ function AllocationBlock({
               {allocation.notes}
             </Typography>
           )}
+          {!isReadOnly && (
+            <Typography variant="caption" display="block" sx={{ color: '#80FF9C', mt: 0.5 }}>
+              Drag right edge to extend →
+            </Typography>
+          )}
         </Box>
       }
       arrow
     >
       <Box
         onClick={onClick}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
         sx={{
           bgcolor: allocation.projectColor,
           color: '#fff',
@@ -159,6 +179,7 @@ function AllocationBlock({
           overflow: 'hidden',
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
+          position: 'relative',
         }}
       >
         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -167,6 +188,39 @@ function AllocationBlock({
         <span style={{ opacity: 0.9, marginLeft: 4, flexShrink: 0 }}>
           {allocation.plannedHours}h
         </span>
+
+        {/* Drag handle for extending - visible on hover */}
+        {!isReadOnly && isHovered && (
+          <Box
+            onMouseDown={handleDragHandleMouseDown}
+            sx={{
+              position: 'absolute',
+              right: 0,
+              top: 0,
+              bottom: 0,
+              width: 12,
+              bgcolor: 'rgba(0,0,0,0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'ew-resize',
+              borderTopRightRadius: 4,
+              borderBottomRightRadius: 4,
+              '&:hover': {
+                bgcolor: 'rgba(0,0,0,0.5)',
+              },
+            }}
+          >
+            <Box
+              sx={{
+                width: 2,
+                height: 12,
+                bgcolor: 'rgba(255,255,255,0.6)',
+                borderRadius: 1,
+              }}
+            />
+          </Box>
+        )}
       </Box>
     </Tooltip>
   );
@@ -177,30 +231,47 @@ function AllocationBlock({
  */
 function WeekCellComponent({
   cell,
+  userId,
   onAddClick,
   onAllocationClick,
+  onDragExtendStart,
+  isDragTarget,
+  isReadOnly,
   viewMode = 'month',
 }: {
   cell: WeekCell;
+  userId: string;
   onAddClick: () => void;
   onAllocationClick?: (allocation: CalendarAllocation) => void;
+  onDragExtendStart?: (allocation: CalendarAllocation) => void;
+  isDragTarget?: boolean;
+  isReadOnly?: boolean;
   viewMode?: ViewMode;
 }) {
   const isCurrent = isCurrentWeek(cell.weekStart, viewMode);
-  
+
   return (
     <Box
+      data-week-start={cell.weekStart}
+      data-user-id={userId}
       sx={{
         minHeight: 80,
         p: 1,
         pb: 3, // Extra padding at bottom for hours total
         borderRight: '1px solid',
         borderColor: 'divider',
-        bgcolor: isCurrent ? 'action.hover' : 'transparent',
+        bgcolor: isDragTarget ? 'primary.50' : isCurrent ? 'action.hover' : 'transparent',
         position: 'relative',
+        transition: 'background-color 0.15s ease',
         '&:hover .add-button': {
           opacity: 1,
         },
+        // Visual indicator when this is a drag target
+        ...(isDragTarget && {
+          outline: '2px dashed',
+          outlineColor: 'primary.main',
+          outlineOffset: -2,
+        }),
       }}
     >
       {/* Allocations */}
@@ -209,6 +280,8 @@ function WeekCellComponent({
           key={allocation.id}
           allocation={allocation}
           onClick={() => onAllocationClick?.(allocation)}
+          onDragExtendStart={onDragExtendStart}
+          isReadOnly={isReadOnly}
         />
       ))}
       
@@ -304,6 +377,8 @@ function UserRow({
   weeks,
   onAddClick,
   onAllocationClick,
+  onDragExtendStart,
+  dragTargetWeeks,
   onUserClick,
   isReadOnly,
   viewMode = 'week',
@@ -313,6 +388,8 @@ function UserRow({
   weeks: string[];
   onAddClick: (userId: string, weekStart: string) => void;
   onAllocationClick?: (allocation: CalendarAllocation) => void;
+  onDragExtendStart?: (allocation: CalendarAllocation) => void;
+  dragTargetWeeks?: string[];
   onUserClick?: (userId: string) => void;
   isReadOnly?: boolean;
   viewMode?: ViewMode;
@@ -390,8 +467,12 @@ function UserRow({
         <WeekCellComponent
           key={weekStart}
           cell={weekCells[weekStart]}
+          userId={user.id}
           onAddClick={() => !isReadOnly && onAddClick(user.id, weekStart)}
           onAllocationClick={isReadOnly ? undefined : onAllocationClick}
+          onDragExtendStart={isReadOnly ? undefined : onDragExtendStart}
+          isDragTarget={dragTargetWeeks?.includes(weekStart)}
+          isReadOnly={isReadOnly}
           viewMode={viewMode}
         />
       ))}
@@ -589,6 +670,106 @@ export function ResourceCalendar({
     message: '',
     severity: 'success',
   });
+
+  // Drag-to-extend state
+  const [dragExtendState, setDragExtendState] = useState<{
+    allocation: CalendarAllocation | null;
+    startWeek: string;
+    targetWeeks: string[];
+    userId: string;
+  } | null>(null);
+
+  // Handle starting a drag extend operation
+  const handleDragExtendStart = useCallback((allocation: CalendarAllocation) => {
+    console.log('🎯 Drag extend started for:', allocation.projectName);
+    setDragExtendState({
+      allocation,
+      startWeek: allocation.weekStart,
+      targetWeeks: [],
+      userId: allocation.userId,
+    });
+
+    // Add mouse move and mouse up listeners for the drag operation
+    const handleMouseMove = (e: MouseEvent) => {
+      // Find which week cell the mouse is over
+      const elements = document.elementsFromPoint(e.clientX, e.clientY);
+      const weekCell = elements.find(el => el.getAttribute('data-week-start'));
+      if (weekCell) {
+        const weekStart = weekCell.getAttribute('data-week-start');
+        const targetUserId = weekCell.getAttribute('data-user-id');
+
+        if (weekStart && targetUserId === allocation.userId) {
+          // Only allow extending to future weeks for the same user
+          if (weekStart > allocation.weekStart) {
+            setDragExtendState(prev => {
+              if (!prev) return null;
+
+              // Calculate all weeks between start and target
+              const allTargetWeeks: string[] = [];
+              let currentWeek = new Date(prev.startWeek + 'T00:00:00');
+              const targetDate = new Date(weekStart + 'T00:00:00');
+
+              while (currentWeek <= targetDate) {
+                const weekStr = currentWeek.toISOString().split('T')[0];
+                if (weekStr > prev.startWeek) {
+                  allTargetWeeks.push(weekStr);
+                }
+                currentWeek.setDate(currentWeek.getDate() + 7);
+              }
+
+              return { ...prev, targetWeeks: allTargetWeeks };
+            });
+          }
+        }
+      }
+    };
+
+    const handleMouseUp = async () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+
+      // Get final state and create allocations
+      setDragExtendState(prev => {
+        if (!prev || !prev.allocation || prev.targetWeeks.length === 0) {
+          return null;
+        }
+
+        // Create allocations for each target week
+        const createAllocations = async () => {
+          try {
+            for (const weekStart of prev.targetWeeks) {
+              await createAllocation({
+                userId: prev.allocation!.userId,
+                projectId: prev.allocation!.projectId,
+                phaseId: prev.allocation!.phaseId || undefined,
+                weekStart,
+                plannedHours: prev.allocation!.plannedHours,
+                createdBy: currentUserId,
+              });
+            }
+            setSnackbar({
+              open: true,
+              message: `Extended allocation to ${prev.targetWeeks.length} more week${prev.targetWeeks.length === 1 ? '' : 's'}`,
+              severity: 'success',
+            });
+          } catch (err) {
+            console.error('Failed to extend allocation:', err);
+            setSnackbar({
+              open: true,
+              message: 'Failed to extend allocation',
+              severity: 'error',
+            });
+          }
+        };
+
+        createAllocations();
+        return null;
+      });
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  }, [createAllocation, currentUserId]);
 
   // Group users by discipline, sorted alphabetically within each group
   const groupedByDiscipline = useMemo(() => {
@@ -911,6 +1092,12 @@ export function ResourceCalendar({
                 weeks={weeks}
                 onAddClick={handleAddClick}
                 onAllocationClick={handleAllocationClick}
+                onDragExtendStart={handleDragExtendStart}
+                dragTargetWeeks={
+                  dragExtendState?.userId === userData.user.id
+                    ? dragExtendState.targetWeeks
+                    : undefined
+                }
                 onUserClick={onUserClick}
                 isReadOnly={isReadOnly}
                 viewMode={viewMode}

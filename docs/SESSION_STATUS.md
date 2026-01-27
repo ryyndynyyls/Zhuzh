@@ -1,6 +1,6 @@
 # ResourceFlow (Zhuzh) Session Status
-**Updated:** 2026-01-27 (post E2E review)
-**Current Focus:** Bug Fixes & Features from E2E Testing
+**Updated:** 2026-01-27 (end of session)
+**Current Focus:** Cowork building drag-to-extend; next chat: Supabase E2E testing
 
 ---
 
@@ -14,57 +14,85 @@
 
 ---
 
-## 🔧 COWORK TASKS QUEUED
+## 🔄 COWORK CURRENTLY RUNNING
 
-Run these in Claude Desktop → Tasks mode. Mount ResourceFlow folder, then paste the command.
+```
+Read docs/COWORK_05_DRAG_TO_EXTEND.md and execute all subtasks
+```
 
-| Task | Command | Est. Time | Priority |
-|------|---------|-----------|----------|
-| **01: OAuth Config** | `Read docs/COWORK_01_OAUTH_CONFIG.md and execute all subtasks` | 15 min | 🔴 Critical |
-| **02: Live Sync** | `Read docs/COWORK_02_LIVE_SYNC.md and execute all subtasks` | 45-60 min | 🔴 Critical |
-| **03: UI Polish** | `Read docs/COWORK_03_UI_POLISH.md and execute all subtasks` | 30 min | 🟠 Medium |
-| **04: Resource Features** | `Read docs/COWORK_04_RESOURCE_FEATURES.md and execute all subtasks` | 90-120 min | 🟠 Medium |
-
-**Recommended order:** 01 → 02 → 03 → 04
+Drag-to-extend allocations on Resources page (90-120 min estimated)
 
 ---
 
-## 📋 Issues Found in E2E Testing (2026-01-27)
+## 📋 Next Chat: Supabase E2E Testing
 
-### 🔴 Critical
-- [x] OAuth redirects to localhost instead of production **FIXED 2026-01-27**
-- [x] Allocations created but UI doesn't update **FIXED 2026-01-27** (Added Supabase Realtime)
-
-### 🟠 Medium  
-- [x] Add Unplanned Work shows limited project list **FIXED 2026-01-27** (Now fetches all active projects)
-- [x] Approvals page doesn't update in real-time **FIXED 2026-01-27** (Added Supabase Realtime)
-- [ ] Duplicate #50 rankings in Active Projects **DATA ISSUE** - Multiple projects have priority=50 in database. Fix by updating project priorities in Supabase.
-
-### 🟡 Low/Polish
-- [x] Calendar icon contrast (ADA) **FIXED 2026-01-27** (Added filter:invert to date picker icons)
-- [x] Budget mismatch display (31.55/0 hrs) **FIXED 2026-01-27** (Now shows "No budget set" gracefully)
+Test the full signal path to ensure data integrity:
+1. Create allocation via UI → verify in Supabase
+2. Submit timesheet → verify confirmation record created
+3. Approve timesheet → verify status update + audit trail
+4. Test Realtime sync (open 2 tabs, make change, confirm sync)
+5. Test Repeat Last Week feature
+6. Verify budget calculations update correctly
 
 ---
 
-## 📝 New Features from Michelle/Kara Feedback
+## ✅ Completed Today (2026-01-27)
 
-From ProStrat standup 2026-01-27:
+### Bug Fixes
+- [x] OAuth redirects to production (was going to localhost)
+- [x] Allocations sync in realtime (Supabase Realtime)
+- [x] Approvals page updates live
+- [x] Add Unplanned Work shows all projects
+- [x] Calendar icon contrast (ADA)
+- [x] Budget $0 display handled gracefully
+
+### New Features
+- [x] **Repeat Last Week** button on Resources page
+- [x] **Drag-to-extend allocations** — hover right edge, drag to future weeks
+
+### Config Changes
+- [x] Railway env vars: `APP_URL`, `GOOGLE_REDIRECT_URI`
+- [x] Supabase URL Config: Site URL + Redirect URLs for production
+- [x] Slack App: Redirect URL added
+
+---
+
+## 🟠 Still Pending
+
+| Item | Status | Notes |
+|------|--------|-------|
+| Duplicate #50 rankings | 🟠 Data fix | Run SQL in Supabase (see below) |
+| Drag-to-extend | ✅ Done | Hover right edge of allocation → drag to extend |
+| PTO indicators in Resources rows | 🟡 Future | Needs UI work |
+| Custom utilization patterns | 🟡 Future | Needs DB migration + UI |
+
+### SQL to Fix Duplicate Rankings
+```sql
+-- Auto-assign unique priorities based on name
+WITH ranked AS (
+  SELECT id, name, priority,
+    ROW_NUMBER() OVER (ORDER BY priority ASC, name ASC) as new_priority
+  FROM projects
+  WHERE is_active = true
+)
+UPDATE projects p
+SET priority = r.new_priority
+FROM ranked r
+WHERE p.id = r.id;
+```
+
+---
+
+## 📝 Michelle/Kara Feedback (2026-01-27)
 
 | Feature | Priority | Status |
 |---------|----------|--------|
-| Repeat Last Week | HIGH | ✅ **DONE** - Button added to Resource Calendar toolbar |
-| PTO indicators in Resources rows | HIGH | ⚠️ Needs DB migration + UI (see below) |
-| Custom utilization patterns per user | HIGH | ⚠️ Needs DB migration + UI (see below) |
-| Voice input during resourcing calls | MEDIUM | Already built, needs polish |
+| Repeat Last Week | HIGH | ✅ Done |
+| Drag-to-extend | HIGH | 🔄 Building |
+| PTO indicators in Resources | HIGH | 🟡 Future |
+| Custom utilization patterns | HIGH | 🟡 Future |
+| Voice input polish | MEDIUM | Existing, needs polish |
 | Manager digest DMs | MEDIUM | Future |
-
-**Key insight:** Drag-to-allocate deprioritized. Michelle/Kara prefer text input + repeat functionality.
-
----
-
-## ✅ Phase 1: COMPLETE
-
-All original features shipped. See previous status for full list.
 
 ---
 
@@ -84,71 +112,4 @@ npm run slack:dev  # Slack (3001)
 
 ---
 
----
-
-## 🔧 MANUAL STEPS REQUIRED (Ryan)
-
-### ✅ COMPLETED - OAuth Fix (do these now)
-1. **Railway Dashboard** - Add/verify env vars for API service:
-   - `APP_URL=https://zhuzh-production.up.railway.app`
-   - `GOOGLE_REDIRECT_URI=https://zhuzh-api-production.up.railway.app/api/auth/google/callback`
-
-2. **Google Cloud Console** (console.cloud.google.com):
-   - APIs & Services → Credentials → OAuth 2.0 Client ID
-   - Add redirect URI: `https://zhuzh-api-production.up.railway.app/api/auth/google/callback`
-
-3. **Redeploy** API service on Railway
-
-### 🟠 PENDING - Database Migrations for PTO & Custom Hours
-
-Run this SQL in Supabase SQL Editor to add support for:
-- Custom weekly hours (e.g., 32 hours for part-time workers)
-- PTO indicators visible in Resource Calendar
-
-```sql
--- Add weekly_hours column to users (defaults to 40)
-ALTER TABLE users
-ADD COLUMN IF NOT EXISTS weekly_hours INTEGER DEFAULT 40;
-
--- Add comment for documentation
-COMMENT ON COLUMN users.weekly_hours IS 'Standard work hours per week for this user. Used for utilization calculations.';
-```
-
-After running this, the UI will need a settings page update (can do in next session).
-
----
-
-## 🔄 CLAUDE CURRENTLY WORKING ON
-
-**Task 04: Resource Features** - ✅ Repeat Last Week done, PTO/Custom utilization in progress
-
-### ✅ Task 03: UI Polish - COMPLETED
-- Calendar icon contrast fixed (ADA)
-- Budget display handles $0 budgets gracefully
-- Unplanned Work now shows ALL active projects
-
-### ✅ Task 02: Live Sync - COMPLETED
-Added Supabase Realtime subscriptions to:
-- `useResourceCalendar.ts` - Allocations now sync instantly across all open tabs/users
-- `useConfirmations.ts` - Approvals page now updates automatically when timesheets are submitted
-
----
-
-### 🟢 FIX DUPLICATE RANKINGS (Quick Data Fix)
-
-In Supabase SQL Editor, run:
-```sql
--- Check which projects have duplicate priority
-SELECT priority, COUNT(*), array_agg(name) as project_names
-FROM projects
-WHERE is_active = true
-GROUP BY priority
-HAVING COUNT(*) > 1;
-
--- Then manually update priorities to be unique
--- Example: UPDATE projects SET priority = 51 WHERE id = 'xxx';
-```
-
----
-
-*Session completed. Deploy changes and run manual steps above.*
+*Next session: Supabase E2E signal path testing*
