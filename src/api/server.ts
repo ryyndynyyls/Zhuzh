@@ -9,9 +9,20 @@ import path from 'path';
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 dotenv.config();
 
+// Global error handlers - catch silent crashes
+process.on('uncaughtException', (err) => {
+  console.error('UNCAUGHT EXCEPTION:', err);
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('UNHANDLED REJECTION:', reason);
+});
+
+console.log('Starting server initialization...');
+
 import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
+console.log('Core imports loaded...');
 import { globalLimiter, authLimiter, voiceLimiter } from './middleware/rateLimiter';
 
 // Route imports
@@ -181,10 +192,16 @@ app.get('/api/health', (req, res) => res.json(healthResponse()));
 // ============================================================
 
 const PORT = Number(process.env.PORT) || Number(process.env.API_PORT) || 3002;
+console.log(`Attempting to listen on port ${PORT}...`);
 
-app.listen(PORT, '0.0.0.0', () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`🗓️  Zhuzh API server running on http://0.0.0.0:${PORT}`);
   console.log(`   Health check: http://0.0.0.0:${PORT}/health`);
+  console.log(`   Server is now accepting connections`);
+});
+
+server.on('error', (err) => {
+  console.error('SERVER ERROR:', err);
 });
 
 export default app;
