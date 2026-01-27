@@ -15,7 +15,7 @@
     "slack": "tsx src/slack/index.ts",
     "slack:dev": "tsx watch src/slack/index.ts",
     "slack:start": "node dist/slack/index.js",
-    "api:start": "node dist/api/server.js",
+    "api:start": "node minimal-server.js",
     "api:dev": "tsx watch src/api/server.ts",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src --ext .ts,.tsx",
