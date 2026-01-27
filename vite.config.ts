@@ -23,4 +23,8 @@ export default defineConfig({
     outDir: 'dist',
     sourcemap: true,
   },
+  preview: {
+    host: '0.0.0.0',
+    allowedHosts: ['zhuzh-production.up.railway.app', '.railway.app'],
+  },
 });
