@@ -168,9 +168,9 @@ app.get('/api/health', (req, res) => res.json(healthResponse()));
 
 const PORT = process.env.PORT || process.env.API_PORT || 3002;
 
-app.listen(PORT, () => {
-  console.log(`🗓️  Zhuzh API server running on port ${PORT}`);
-  console.log(`   OAuth callback: http://localhost:${PORT}/api/auth/google/callback`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🗓️  Zhuzh API server running on http://0.0.0.0:${PORT}`);
+  console.log(`   Health check: http://0.0.0.0:${PORT}/health`);
 });
 
 export default app;
