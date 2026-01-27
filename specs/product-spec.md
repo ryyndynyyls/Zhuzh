@@ -1,24 +1,22 @@
-# ResourceFlow: Slack-First Resourcing & Budget Tracker
+# Zhuzh: Slack-First Timekeeping & Resource Management
 
-## Product Spec for Use All Five (~30 people)
+## Product Spec
 
-> **Last updated:** January 8, 2026 — Post Jam Sesh  
-> **Status:** Active  
-> **Maintained by:** Claude (updates automatically during sessions)
+> **Last updated:** January 27, 2026  
+> **Status:** Phase 1 Complete — Internal Pilot  
+> **Production:** https://zhuzh-production.up.railway.app
 
 ---
 
-## Workshop Team & Domains
+## Team
 
-This spec is being built collaboratively via the `#resourceflow-workshop` Slack channel.
-
-| Person | Role | Domain Ownership |
-|--------|------|------------------|
-| **Levi** | CEO | Strategic Vision — ensures this serves the business |
-| **Ryan** | Conceptual Director | Facilitator — leads the build |
-| **Michelle** | Managing Director | Approvals & Reporting — owns the manager experience |
-| **Maleno** | Producer | Resource Planning — owns the allocation UX |
-| **Kara** | Producer | Employee Experience — owns the confirmation flow |
+| Person | Role | Domain |
+|--------|------|--------|
+| **Levi** | CEO | Strategic direction |
+| **Ryan** | Conceptual Director | Product & development |
+| **Michelle** | Managing Director | Approvals & reporting |
+| **Maleno** | Producer | Resource planning |
+| **Kara** | Producer | Employee experience |
 
 ---
 

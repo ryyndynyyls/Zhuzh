@@ -1,92 +1,110 @@
-# ResourceFlow
+# Zhuzh
 
-**Slack-First Resourcing & Budget Tracker for Use All Five**
+**Slack-First Timekeeping & Resource Management for Creative Teams**
 
-A "planned vs. actual" confirmation system (not surveillance time tracking) where:
-- Producers allocate resources weekly
-- Employees confirm/adjust hours via Slack DM on Fridays
-- Managers approve with one click
-- Everyone sees budget health in real-time
+> Confirmation over tracking. Trust over surveillance.
 
 ---
 
-## 📁 Project Structure
+## What Is This?
+
+Zhuzh is a resource management tool built for creative agencies (8-50 people). It replaces expensive tools like Harvest, 10,000ft, SmartSheet, and Float with a simpler approach:
+
+1. **Producers plan allocations** via web interface
+2. **Employees confirm hours** via Friday Slack DM
+3. **Managers approve** with one click
+4. **Budgets update** in real-time
+
+No timers. No surveillance. Just confirm what was planned, or note what changed.
+
+---
+
+## Production URLs
+
+| Service | URL |
+|---------|-----|
+| Web App | https://zhuzh-production.up.railway.app |
+| API | https://zhuzh-api-production.up.railway.app |
+| Slack Bot | https://zhuzh-slack-integration-production.up.railway.app |
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| Frontend | React + TypeScript + Vite + Material UI |
+| Backend | Supabase (Postgres + Auth + RLS) |
+| API | Express.js |
+| Slack | Bolt SDK |
+| Hosting | Railway |
+| AI | Google Gemini (calendar config, voice commands) |
+
+---
+
+## Local Development
+
+```bash
+# Install dependencies
+npm install
+
+# Start all services (3 terminals)
+npm run dev        # Web app (port 3000)
+npm run api:dev    # API server (port 3002)
+npm run slack:dev  # Slack bot (port 3001)
+```
+
+Required environment variables in `.env.local`:
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `SLACK_BOT_TOKEN`
+- `SLACK_APP_TOKEN`
+- `SLACK_SIGNING_SECRET`
+
+---
+
+## Project Structure
 
 ```
-ResourceFlow/
-├── README.md                      # This file
+├── src/
+│   ├── api/           # Express API server
+│   ├── slack/         # Slack bot (Bolt SDK)
+│   ├── pages/         # React pages
+│   ├── components/    # React components
+│   └── hooks/         # Custom React hooks
 ├── docs/
-│   ├── SESSION_STATUS.md          # ⚡ READ FIRST — Current status & next steps
-│   ├── FEATURE_PRIORITIZATION.md  # Voting results & phase assignments
-│   ├── research-brief.md          # Market research & team insights
-│   ├── jam-sesh-guide.md          # Workshop 1 outcomes
-│   ├── live-sync-doc.md           # Locked decisions from Slack
-│   └── quick-reference.md         # One-page reference card
+│   ├── SESSION_STATUS.md    # Current development status
+│   └── live-sync-doc.md     # Locked product decisions
 ├── specs/
-│   ├── product-spec.md            # Full product specification
-│   ├── calendar-integration.md    # Calendar + PTOverlap spec
-│   └── llm-onboarding.md          # LLM-powered onboarding spec
-└── prototypes/
-    ├── slack-mockups.jsx          # Slack UI mockups
-    └── app-full.jsx               # Full app prototype
+│   ├── product-spec.md      # Product specification
+│   └── calendar-integration.md
+├── sql/               # Database migrations
+└── brand/             # Logo and design assets
 ```
 
-### Document Structure
+---
 
-**No version numbers.** Each document is a single living file with:
-- Current content at the top
-- Archive section at bottom (collapsed) for historical versions
+## Status
 
-Claude maintains these documents during sessions.
+**Phase 1: Complete** — All core features shipped, Railway deployment working.
+
+**Current Phase: Internal Pilot** — Testing with Use All Five team before marketing to other agencies.
+
+See `docs/SESSION_STATUS.md` for current development status.
 
 ---
 
-## 🔗 Quick Links
+## Team
 
-| Resource | Link |
-|----------|------|
-| Live Sync Doc | [Google Doc](https://docs.google.com/document/d/1EvTExGIvdSWNo8cxjXIOqAR_D0BjQcvJFKHv7PoIjGc/edit) |
-| Priority Sheet | [Google Sheet](https://docs.google.com/spreadsheets/d/1fqGPctbG2UlDXdA6VIMn_Eja-S9cvEhm6q4iok7FamY/edit) |
-| Slack Channel | #resourceflow-workshop |
+Built by [Use All Five](https://useallfive.com), a creative agency in Los Angeles.
 
----
-
-## 👥 Team & Domains
-
-| Person | Role | Domain |
-|--------|------|--------|
-| **Levi** | CEO | Strategic Vision |
-| **Ryan** | Conceptual Director | Facilitator |
-| **Michelle** | Managing Director | Approvals & Reporting |
-| **Maleno** | Producer | Resource Planning |
-| **Kara** | Producer | Employee Experience |
+| Role | Person |
+|------|--------|
+| Product & Development | Ryan Daniels |
+| Managing Director | Michelle |
+| CEO | Levi |
 
 ---
 
-## 🚦 Current Status
-
-**Post Jam Sesh — Feature Prioritization Complete**
-
-See `docs/SESSION_STATUS.md` for current state and next steps.
-
-### Phase Summary
-- **Phase 1 (MVP):** 12 features
-- **Phase 2 (Polish):** 6 features  
-- **Phase 3 (Later):** 4 features
-- **Cut:** Timer Feature (1.0 avg — nobody wants it)
-
----
-
-## 🚀 How Claude Uses This Folder
-
-1. **At session start:** Claude reads `docs/SESSION_STATUS.md` to understand where we are
-2. **During work:** Claude references relevant docs (specs, research, mockups)
-3. **At session end:** Claude updates `SESSION_STATUS.md` with progress
-
-To start a session, tell Claude:
-> "Review SESSION_STATUS and let me know where we are."
-
----
-
-*Last updated: January 8, 2026*
-
+*Last updated: January 27, 2026*
