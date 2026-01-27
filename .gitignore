@@ -27,5 +27,8 @@ npm-debug.log*
 # TypeScript
 *.tsbuildinfo
 
+# Compiled JS in src (use dist/ for builds)
+src/**/*.js
+
 # Testing
 coverage/
