@@ -505,7 +505,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
       {/* Add Unplanned Work Modal */}
       <AddUnplannedWorkModal
         open={unplannedModalOpen}
-        projects={MOCK_PROJECTS}
+        projects={availableProjects}
         onClose={() => setUnplannedModalOpen(false)}
         onAdd={handleAddUnplannedWork}
       />
