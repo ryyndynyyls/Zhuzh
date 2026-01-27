@@ -11,7 +11,7 @@
     "build": "tsc && vite build",
     "build:api": "esbuild src/api/server.ts --bundle --platform=node --target=node20 --outfile=dist/api/server.js --packages=external",
     "build:slack": "esbuild src/slack/index.ts --bundle --platform=node --target=node20 --outfile=dist/slack/index.js --packages=external",
-    "preview": "vite preview",
+    "preview": "vite preview --host 0.0.0.0 --port ${PORT:-4173}",
     "slack": "tsx src/slack/index.ts",
     "slack:dev": "tsx watch src/slack/index.ts",
     "slack:start": "node dist/slack/index.js",
