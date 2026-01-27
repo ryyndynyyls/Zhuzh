@@ -35,6 +35,20 @@ import subProjectsRouter from './sub-projects';
 
 const app = express();
 
+// ============================================================
+// HEALTH CHECK - First, before any middleware
+// ============================================================
+app.get('/health', (req, res) => {
+  console.log('Health check hit!');
+  res.json({ status: 'healthy', timestamp: new Date().toISOString(), service: 'zhuzh-api' });
+});
+
+// Request logger for debugging
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+  next();
+});
+
 // Security headers
 app.use(helmet());
 
