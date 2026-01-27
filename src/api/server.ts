@@ -166,7 +166,7 @@ app.get('/api/health', (req, res) => res.json(healthResponse()));
 // START SERVER
 // ============================================================
 
-const PORT = process.env.PORT || process.env.API_PORT || 3002;
+const PORT = Number(process.env.PORT) || Number(process.env.API_PORT) || 3002;
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🗓️  Zhuzh API server running on http://0.0.0.0:${PORT}`);
