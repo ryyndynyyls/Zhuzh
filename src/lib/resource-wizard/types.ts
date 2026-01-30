@@ -22,6 +22,28 @@ export interface WizardAllocation {
   phase_name?: string;
 }
 
+export interface WorkSchedule {
+  mon: number;
+  tue: number;
+  wed: number;
+  thu: number;
+  fri: number;
+  sat: number;
+  sun: number;
+}
+
+export interface ResourceConfig {
+  work_schedule: WorkSchedule;
+  weekly_capacity: number;
+  project_exclusions: string[];
+  project_preferences: string[];
+  skills: string[];
+  seniority_notes: string | null;
+  scheduling_notes: string | null;
+  parsed_at: string;
+  parse_confidence: number;
+}
+
 export interface WizardUser {
   id: string;
   name: string;
@@ -31,6 +53,9 @@ export interface WizardUser {
   location?: string;
   is_freelance?: boolean;
   specialty_notes?: string;
+  resource_config?: ResourceConfig;
+  work_schedule?: WorkSchedule;
+  project_exclusions?: string[];
   weekly_capacity: number;
   allocations: WizardAllocation[];
   pto_dates: string[];

@@ -58,6 +58,7 @@ export interface ApprovalCardProps {
   onReject: (id: string, reason?: string) => void;
   onViewDetails?: (id: string) => void;
   onViewHistory?: (id: string) => void;
+  onNameClick?: (employeeId: string) => void; // Opens profile modal
 }
 
 export const ApprovalCard: React.FC<ApprovalCardProps> = ({
@@ -68,6 +69,7 @@ export const ApprovalCard: React.FC<ApprovalCardProps> = ({
   onReject,
   onViewDetails,
   onViewHistory,
+  onNameClick,
 }) => {
   const [expanded, setExpanded] = useState(true);
   const [rejectionDialogOpen, setRejectionDialogOpen] = useState(false);
@@ -161,7 +163,16 @@ export const ApprovalCard: React.FC<ApprovalCardProps> = ({
               <Box>
                 <Typography
                   variant="subtitle1"
-                  sx={{ color: '#F3F4F6', fontWeight: 600 }}
+                  onClick={() => onNameClick?.(employee.id)}
+                  sx={{ 
+                    color: '#F3F4F6', 
+                    fontWeight: 600,
+                    cursor: onNameClick ? 'pointer' : 'default',
+                    '&:hover': onNameClick ? { 
+                      color: '#FF8731',
+                      textDecoration: 'underline'
+                    } : {}
+                  }}
                 >
                   {employee.name}
                 </Typography>

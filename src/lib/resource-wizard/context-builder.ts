@@ -171,7 +171,7 @@ async function fetchUsersWithAllocations(
   // Build user query
   let userQuery = supabase
     .from('users')
-    .select('id, name, email, role, job_title, location, is_freelance, specialty_notes')
+    .select('id, name, email, role, job_title, location, is_freelance, specialty_notes, resource_config')
     .eq('org_id', orgId)
     .eq('is_active', true)
     .order('name');
@@ -251,7 +251,10 @@ async function fetchUsersWithAllocations(
       location: user.location || undefined,
       is_freelance: user.is_freelance || false,
       specialty_notes: user.specialty_notes || undefined,
-      weekly_capacity: 40, // Default, could be fetched from user settings
+      resource_config: (user as any).resource_config || undefined,
+      weekly_capacity: (user as any).resource_config?.weekly_capacity || 40,
+      project_exclusions: (user as any).resource_config?.project_exclusions || [],
+      work_schedule: (user as any).resource_config?.work_schedule || undefined,
       allocations: userAllocations,
       pto_dates: userPto
     };

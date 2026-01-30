@@ -63,6 +63,7 @@ export interface ApprovalQueueProps {
   onBulkApprove: (ids: string[]) => void;
   onViewDetails?: (id: string) => void;
   onViewHistory?: (id: string) => void;
+  onNameClick?: (employeeId: string) => void;
   approvedTodayCount?: number;
   loading?: boolean;
   error?: Error | null;
@@ -127,6 +128,7 @@ export const ApprovalQueue: React.FC<ApprovalQueueProps> = ({
   onBulkApprove,
   onViewDetails,
   onViewHistory,
+  onNameClick,
   approvedTodayCount = 0,
   loading = false,
   error = null,
@@ -608,6 +610,7 @@ export const ApprovalQueue: React.FC<ApprovalQueueProps> = ({
                 onReject={handleReject}
                 onViewDetails={onViewDetails}
                 onViewHistory={onViewHistory}
+                onNameClick={onNameClick}
               />
             </Box>
           ))}

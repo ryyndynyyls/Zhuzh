@@ -19,6 +19,7 @@ interface Project {
   id: string;
   name: string;
   color: string;
+  priority: number | null;
 }
 
 export function ResourceCalendarPage() {
@@ -74,15 +75,17 @@ export function ResourceCalendarPage() {
       try {
         const { data, error: fetchError } = await supabase
           .from('projects')
-          .select('id, name, color')
+          .select('id, name, color, priority')
           .eq('org_id', user.org_id)
           .eq('status', 'active')
+          .order('priority', { ascending: true, nullsFirst: false })
           .order('name');
 
         if (fetchError) throw fetchError;
         setProjects((data || []).map(p => ({
           ...p,
-          color: p.color ?? '#808080'
+          color: p.color ?? '#808080',
+          priority: p.priority ?? null,
         })));
       } catch (err) {
         console.error('Failed to fetch projects:', err);

@@ -18,41 +18,47 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
+          end_date: string
           id: string
           is_billable: boolean
           notes: string | null
           phase_id: string | null
           planned_hours: number
           project_id: string
+          start_date: string
           updated_at: string
           user_id: string
-          week_start: string
+          week_start: string // Deprecated: kept for backwards compatibility, use start_date instead
         }
         Insert: {
           created_at?: string
           created_by?: string | null
+          end_date: string
           id?: string
           is_billable?: boolean
           notes?: string | null
           phase_id?: string | null
           planned_hours: number
           project_id: string
+          start_date: string
           updated_at?: string
           user_id: string
-          week_start: string
+          week_start?: string // Deprecated: kept for backwards compatibility, use start_date instead
         }
         Update: {
           created_at?: string
           created_by?: string | null
+          end_date?: string
           id?: string
           is_billable?: boolean
           notes?: string | null
           phase_id?: string | null
           planned_hours?: number
           project_id?: string
+          start_date?: string
           updated_at?: string
           user_id?: string
-          week_start?: string
+          week_start?: string // Deprecated: kept for backwards compatibility, use start_date instead
         }
         Relationships: [
           {

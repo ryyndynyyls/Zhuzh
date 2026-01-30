@@ -365,6 +365,33 @@ export function TeamMemberModal({
         }
       }
 
+      // If specialty_notes changed, call API to parse resource_config
+      const notesChanged = editForm.specialty_notes !== (user.specialty_notes || '');
+      if (isAdmin && notesChanged && editForm.specialty_notes) {
+        try {
+          const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3002';
+          const response = await fetch(`${apiUrl}/api/team/parse-config`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              specialty_notes: editForm.specialty_notes,
+              userId: userId
+            })
+          });
+          
+          if (response.ok) {
+            const { data: resourceConfig } = await response.json();
+            console.log('[TeamMemberModal] Parsed resource config:', resourceConfig);
+            // The API already updates the user record, so we don't need to update again
+          } else {
+            console.warn('[TeamMemberModal] Failed to parse resource config');
+          }
+        } catch (parseErr) {
+          console.warn('[TeamMemberModal] Resource config parse error:', parseErr);
+          // Don't block save if parsing fails
+        }
+      }
+
       const { error: updateError } = await supabase
         .from('users')
         .update(updates)

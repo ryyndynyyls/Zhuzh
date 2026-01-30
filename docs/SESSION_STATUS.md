@@ -1,98 +1,150 @@
 # ResourceFlow (Zhuzh) Session Status
-**Updated:** 2026-01-27 (end of session)
-**Current Focus:** Cowork building drag-to-extend; next chat: Supabase E2E testing
+**Updated:** 2026-01-30 (Ready for E2E Testing)
+**Current Focus:** Comprehensive E2E Test → Marketing page (Feb 2nd)
 
 ---
 
-## 🚀 Railway Deployment: LIVE
+## 🚀 Railway Deployment: LIVE & VERIFIED
 
 | Service | URL | Status |
 |---------|-----|--------|
 | **Web App** | https://zhuzh-production.up.railway.app | ✅ Working |
-| **API Server** | https://zhuzh-api-production.up.railway.app | ✅ Working |
+| **API Server** | https://zhuzh-api-production.up.railway.app | ✅ Verified |
 | **Slack Bot** | https://zhuzh-slack-integration-production.up.railway.app | ✅ Active |
 
 ---
 
-## 🔄 COWORK CURRENTLY RUNNING
+## 🧪 NEXT SESSION: Comprehensive E2E Test Plan
 
-```
-Read docs/COWORK_05_DRAG_TO_EXTEND.md and execute all subtasks
-```
+### Pre-Test: Deploy Latest Changes
+- [ ] Push Cowork changes to GitHub
+- [ ] Railway auto-deploys (verify)
+- [ ] Check production app loads
 
-Drag-to-extend allocations on Resources page (90-120 min estimated)
+### Test 1: Resource Calendar — Visual Indicators
+- [ ] Hunter's Thursday (3h available) — NO stripes
+- [ ] Hunter's Friday (0h) — HAS stripes
+- [ ] Weekends — HAS stripes for everyone
+- [ ] Cindy's OOO days — HAS stripes (from Google Calendar)
+- [ ] Jacob's OOO days — HAS stripes (from Google Calendar)
+- [ ] "Fridays off 1/30" attendees — Friday HAS stripes
+
+### Test 2: Allocation Creation
+- [ ] Click empty cell → Create allocation dialog opens
+- [ ] Select project from dropdown (search works)
+- [ ] Set hours (e.g., 4h)
+- [ ] Save → Allocation tile appears
+- [ ] Total hours in cell updates correctly (no floating point jank)
+
+### Test 3: Allocation Group Editing
+- [ ] Click existing allocation bar → "Edit Allocation Group" dialog opens
+- [ ] Shows correct date range (e.g., "Jan 26-30 (5 days @ 4h/day)")
+- [ ] Total shows clean number (not "22.349999999999998h")
+- [ ] "Edit All Days" → Change hours → Apply → All days update
+- [ ] "Delete Group" → Confirm → All days deleted
+
+### Test 4: Individual Day Editing (NEW)
+- [ ] Click allocation bar → Dialog opens
+- [ ] Click specific day chip (e.g., "Fri 4h") → Switches to single-day edit
+- [ ] "Back to Group" button visible
+- [ ] Change hours for just that day → Save → Only that day changes
+- [ ] Set to 0h → Deletes just that day, others remain
+- [ ] Verify Mon-Thu still exist after deleting Friday
+
+### Test 5: Over-Allocation Warnings
+- [ ] Allocate hours exceeding user's daily capacity
+- [ ] Warning indicator appears (orange triangle?)
+- [ ] Hunter at 174% utilization shows warning
+
+### Test 6: Repeat Last Week
+- [ ] Navigate to empty week
+- [ ] Click "Repeat Last Week" button
+- [ ] Previous week's allocations copied to current week
+- [ ] Verify hours are correct
+
+### Test 7: Friday Slack DM Flow (if time)
+- [ ] Trigger Friday DM (or test user)
+- [ ] Employee receives DM with allocations
+- [ ] Confirm/adjust hours
+- [ ] Submission appears in approval queue
+
+### Test 8: Manager Approval Flow
+- [ ] Go to Approvals page
+- [ ] See pending confirmations
+- [ ] Click employee name → Profile modal opens
+- [ ] Approve/reject confirmation
+- [ ] Status updates in realtime
+
+### Post-Test
+- [ ] Note any bugs found
+- [ ] Update SESSION_STATUS.md with results
+- [ ] Prioritize fixes vs. proceed to marketing page
 
 ---
 
-## 📋 Next Chat: Supabase E2E Testing
+## ✅ Completed Today (2026-01-30)
 
-Test the full signal path to ensure data integrity:
-1. Create allocation via UI → verify in Supabase
-2. Submit timesheet → verify confirmation record created
-3. Approve timesheet → verify status update + audit trail
-4. Test Realtime sync (open 2 tabs, make change, confirm sync)
-5. Test Repeat Last Week feature
-6. Verify budget calculations update correctly
+### Calendar & Allocation Fixes (COMPLETE ✅)
 
----
+**Task file:** `docs/COWORK_CALENDAR_ALLOCATION_FIXES.md`
 
-## ✅ Completed Today (2026-01-27)
+**What was done:**
 
-### Bug Fixes
-- [x] OAuth redirects to production (was going to localhost)
-- [x] Allocations sync in realtime (Supabase Realtime)
-- [x] Approvals page updates live
-- [x] Add Unplanned Work shows all projects
-- [x] Calendar icon contrast (ADA)
-- [x] Budget $0 display handled gracefully
+1. **Stripe Logic Fixed** — Stripes now only appear on 0h days
+   - Hunter's Thursday (3h) no longer has stripes
+   - Hunter's Friday (0h) and weekends still have stripes
+   - Removed "reduced hours" lighter stripes feature
 
-### New Features
-- [x] **Repeat Last Week** button on Resources page
-- [x] **Drag-to-extend allocations** — hover right edge, drag to future weeks
+2. **Google Calendar Events Synced to Resource Calendar**
+   - Added query for `user_calendar_events` table (OOO, PTO, friday_off events)
+   - Calendar events merged with `pto_entries` data
+   - All-day events = 8h, partial events calculate hours from duration
+   - Duplicate prevention (same user+date)
 
-### Config Changes
-- [x] Railway env vars: `APP_URL`, `GOOGLE_REDIRECT_URI`
-- [x] Supabase URL Config: Site URL + Redirect URLs for production
-- [x] Slack App: Redirect URL added
+3. **Individual Day Editing Fixed**
+   - Day chips now clickable and switch to single-day edit mode
+   - Added `handleSaveSingleDay` function for single allocation updates
+   - "Back to Group" button to return to group edit view
+   - Delete button works for single day from group
+   - Project dropdown disabled when editing existing day
 
----
+4. **Floating Point Display Fixed**
+   - All hour displays now rounded: `Math.round(x * 100) / 100`
+   - Fixed: totalHours, hoursPerDay, cell totals, day chips, tooltips
+   - No more "22.349999999999998h" artifacts
 
-## 🟠 Still Pending
+**Files modified:**
+- `src/components/ResourceCalendar.tsx` — Stripe logic, day editing, number formatting
+- `src/hooks/useResourceCalendar.ts` — Calendar events fetching and merging
 
-| Item | Status | Notes |
-|------|--------|-------|
-| Duplicate #50 rankings | 🟠 Data fix | Run SQL in Supabase (see below) |
-| Drag-to-extend | ✅ Done | Hover right edge of allocation → drag to extend |
-| PTO indicators in Resources rows | 🟡 Future | Needs UI work |
-| Custom utilization patterns | 🟡 Future | Needs DB migration + UI |
+### Day-Level Migration (COMPLETE ✅)
+- Ran migration 006 in production
+- 31,656 single-day allocation records
+- 109,260 total hours preserved
 
-### SQL to Fix Duplicate Rankings
-```sql
--- Auto-assign unique priorities based on name
-WITH ranked AS (
-  SELECT id, name, priority,
-    ROW_NUMBER() OVER (ORDER BY priority ASC, name ASC) as new_priority
-  FROM projects
-  WHERE is_active = true
-)
-UPDATE projects p
-SET priority = r.new_priority
-FROM ranked r
-WHERE p.id = r.id;
-```
+### Unavailability Visual Indicators (COMPLETE ✅)
+- Diagonal stripes on 0h days
+- Stripes in week/day view only
+
+### Resource Config Parsing (COMPLETE ✅)
+- Gemini 2.0-flash, 24 users parsed
+- Hunter: 33h/wk with custom schedule
 
 ---
 
-## 📝 Michelle/Kara Feedback (2026-01-27)
+## 🐛 Known Issues
 
-| Feature | Priority | Status |
-|---------|----------|--------|
-| Repeat Last Week | HIGH | ✅ Done |
-| Drag-to-extend | HIGH | 🔄 Building |
-| PTO indicators in Resources | HIGH | 🟡 Future |
-| Custom utilization patterns | HIGH | 🟡 Future |
-| Voice input polish | MEDIUM | Existing, needs polish |
-| Manager digest DMs | MEDIUM | Future |
+| Issue | Severity | Notes |
+|-------|----------|-------|
+| Visual bar spanning | 🟢 LOW | Deferred - grouping/editing works, CSS spanning cosmetic |
+
+---
+
+## 📋 Next Priorities
+
+1. **E2E Test** — Verify all fixes work in production
+2. **Marketing page for Michelle's MD group** (Feb 2nd deadline) ⏰
+3. Clean up any debug logging before pilot
 
 ---
 
@@ -107,9 +159,20 @@ npm run slack:dev  # Slack (3001)
 
 **Key URLs:**
 - Production: https://zhuzh-production.up.railway.app
+- API Health: https://zhuzh-api-production.up.railway.app/health
 - Supabase: https://supabase.com/dashboard/project/ovyppexeqwwaghwddtip
 - GitHub: https://github.com/ryyndynyyls/Zhuzh
 
+**Ryan's User ID:** `ce0c98c1-e9e6-4151-8a41-b4708c4c4795`
+
 ---
 
-*Next session: Supabase E2E signal path testing*
+## 📊 Database Stats (2026-01-30)
+
+| Metric | Count |
+|--------|-------|
+| Users | 27 |
+| Projects | 224 |
+| Allocations | 31,656 |
+| Time Confirmations | 1,822 |
+| Time Entries | 5,077 |

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Box, Alert, Snackbar } from '@mui/material';
 import { ApprovalQueue } from '../components/ApprovalQueue';
 import { AuditTrailModal } from '../components/AuditTrailModal';
+import { TeamMemberModal } from '../components/TeamMemberModal';
 import { usePendingApprovals } from '../hooks/useConfirmations';
 import { useAuth } from '../contexts/AuthContext';
 import { ZhuzhPageLoader } from '../components/ZhuzhPageLoader';
@@ -27,6 +28,10 @@ export function ApprovalsPage() {
   const [auditModalOpen, setAuditModalOpen] = useState(false);
   const [selectedApprovalId, setSelectedApprovalId] = useState<string | null>(null);
   const [selectedApprovalName, setSelectedApprovalName] = useState<string>('');
+
+  // Profile modal state
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
 
   if (loading) {
     return <ZhuzhPageLoader message="Loading approvals..." />;
@@ -82,6 +87,11 @@ export function ApprovalsPage() {
     setAuditModalOpen(true);
   };
 
+  const handleNameClick = (employeeId: string) => {
+    setSelectedEmployeeId(employeeId);
+    setProfileModalOpen(true);
+  };
+
   // Transform data for component
   // API now returns pre-calculated warnings (totalPlanned, totalActual, hasVarianceWarning, hasRubberStampWarning)
   const transformedApprovals = approvals.map(a => {
@@ -118,6 +128,7 @@ export function ApprovalsPage() {
         onReject={handleReject}
         onBulkApprove={handleBulkApprove}
         onViewHistory={handleViewHistory}
+        onNameClick={handleNameClick}
       />
 
       {/* Audit Trail Modal */}
@@ -131,6 +142,21 @@ export function ApprovalsPage() {
           entityType="time_confirmations"
           entityId={selectedApprovalId}
           entityName={selectedApprovalName}
+        />
+      )}
+
+      {/* Team Member Profile Modal */}
+      {selectedEmployeeId && (
+        <TeamMemberModal
+          open={profileModalOpen}
+          onClose={() => {
+            setProfileModalOpen(false);
+            setSelectedEmployeeId(null);
+          }}
+          userId={selectedEmployeeId}
+          currentUserId={user?.id || ''}
+          currentUserRole={user?.role as 'employee' | 'pm' | 'admin' || 'employee'}
+          onUpdate={refetch}
         />
       )}
 

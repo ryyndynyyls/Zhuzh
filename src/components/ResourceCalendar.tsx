@@ -1,6 +1,11 @@
 /**
  * Resource Calendar Component
  * Visual grid showing team allocations by week
+ *
+ * Updated 2026-01-29: Now supports day-level allocations with start_date/end_date
+ * - Allocations can span multiple days
+ * - Drag-to-extend updates end_date instead of creating new allocations
+ * - PTO entries display on their specific days
  */
 
 import React, { useState, useMemo, useCallback } from 'react';
@@ -18,12 +23,16 @@ import {
   DialogActions,
   Button,
   TextField,
-  Select,
-  MenuItem,
+  Autocomplete,
   FormControl,
   InputLabel,
+  Select,
+  MenuItem,
   LinearProgress,
   Alert,
+  FormControlLabel,
+  Checkbox,
+  Divider,
 } from '@mui/material';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
@@ -32,15 +41,17 @@ import TodayIcon from '@mui/icons-material/Today';
 import WarningIcon from '@mui/icons-material/Warning';
 import BeachAccessIcon from '@mui/icons-material/BeachAccess';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import DragHandleIcon from '@mui/icons-material/DragHandle';
+import DeleteIcon from '@mui/icons-material/Delete';
 import Snackbar from '@mui/material/Snackbar';
 import {
   useResourceCalendar,
   CalendarAllocation,
+  AllocationGroup,
   UserWeekData,
   WeekCell,
   ViewMode,
   navigateByViewMode,
+  PtoData,
 } from '../hooks/useResourceCalendar';
 import { ViewToggle } from './ViewToggle';
 import { UserAvatar } from './shared/UserAvatar';
@@ -50,7 +61,7 @@ interface ResourceCalendarProps {
   orgId: string;
   currentUserId: string;
   currentUserRole?: 'employee' | 'pm' | 'admin';
-  projects: Array<{ id: string; name: string; color: string }>;
+  projects: Array<{ id: string; name: string; color: string; priority?: number | null }>;
   onAllocationClick?: (allocation: CalendarAllocation) => void;
   onUserClick?: (userId: string) => void;
   initialViewMode?: ViewMode;
@@ -88,6 +99,40 @@ function formatWeekLabel(dateStr: string): string {
 }
 
 /**
+ * Format date range for display (e.g., "Jan 13-17" or "Jan 13 - Feb 2")
+ */
+function formatDateRange(startDate: string, endDate: string): string {
+  const start = new Date(startDate + 'T00:00:00');
+  const end = new Date(endDate + 'T00:00:00');
+
+  if (start.getMonth() === end.getMonth()) {
+    return `${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}-${end.getDate()}`;
+  }
+  return `${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${end.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+}
+
+/**
+ * Get Monday of a given week
+ */
+function getWeekMonday(dateStr: string): string {
+  const date = new Date(dateStr + 'T00:00:00');
+  const day = date.getDay();
+  const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+  const monday = new Date(date.setDate(diff));
+  return monday.toISOString().split('T')[0];
+}
+
+/**
+ * Get Friday of a given week
+ */
+function getWeekFriday(dateStr: string): string {
+  const monday = getWeekMonday(dateStr);
+  const date = new Date(monday + 'T00:00:00');
+  date.setDate(date.getDate() + 4);
+  return date.toISOString().split('T')[0];
+}
+
+/**
  * Check if a date/week contains today
  */
 function isCurrentWeek(dateStr: string, viewMode: ViewMode = 'month'): boolean {
@@ -110,21 +155,77 @@ function isCurrentWeek(dateStr: string, viewMode: ViewMode = 'month'): boolean {
 }
 
 /**
+ * Calculate number of days between two dates
+ */
+function daysBetween(startDate: string, endDate: string): number {
+  const start = new Date(startDate + 'T00:00:00');
+  const end = new Date(endDate + 'T00:00:00');
+  return Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+}
+
+/**
+ * PTO indicator badge
+ */
+function PtoBadge({ ptoData }: { ptoData: PtoData }) {
+  const typeLabels: Record<string, string> = {
+    pto: 'PTO',
+    holiday: 'Holiday',
+    'half-day': 'Half Day',
+    sick: 'Sick',
+  };
+
+  const typeColors: Record<string, string> = {
+    pto: '#2196F3',
+    holiday: '#4CAF50',
+    'half-day': '#FF9800',
+    sick: '#F44336',
+  };
+
+  return (
+    <Tooltip title={ptoData.notes || `${typeLabels[ptoData.type]} - ${ptoData.hours}h`}>
+      <Chip
+        icon={<BeachAccessIcon sx={{ fontSize: 14 }} />}
+        label={`${typeLabels[ptoData.type]} ${ptoData.hours}h`}
+        size="small"
+        sx={{
+          bgcolor: typeColors[ptoData.type],
+          color: '#fff',
+          fontSize: '0.65rem',
+          height: 20,
+          mb: 0.5,
+          '& .MuiChip-icon': {
+            color: '#fff',
+          },
+        }}
+      />
+    </Tooltip>
+  );
+}
+
+/**
  * Allocation block within a cell
- * Includes a drag handle on the right edge for extending to future weeks
+ * Includes a drag handle on the right edge for extending to future days
  */
 function AllocationBlock({
   allocation,
   onClick,
   onDragExtendStart,
   isReadOnly = false,
+  showDateRange = false,
+  displayHours,
 }: {
   allocation: CalendarAllocation;
   onClick?: () => void;
   onDragExtendStart?: (allocation: CalendarAllocation) => void;
   isReadOnly?: boolean;
+  showDateRange?: boolean;
+  displayHours?: number; // Per-day hours to display instead of total
 }) {
   const [isHovered, setIsHovered] = useState(false);
+  const daysSpan = daysBetween(allocation.startDate, allocation.endDate);
+  
+  // Use displayHours if provided (per-day), otherwise fall back to total
+  const hoursToShow = displayHours !== undefined ? displayHours : allocation.plannedHours;
 
   const handleDragHandleMouseDown = (e: React.MouseEvent) => {
     e.stopPropagation(); // Don't trigger onClick
@@ -139,7 +240,10 @@ function AllocationBlock({
           {allocation.phaseName && (
             <Typography variant="caption" display="block">{allocation.phaseName}</Typography>
           )}
-          <Typography variant="caption" display="block">{allocation.plannedHours}h planned</Typography>
+          <Typography variant="caption" display="block">
+            {formatDateRange(allocation.startDate, allocation.endDate)} ({daysSpan} day{daysSpan > 1 ? 's' : ''})
+          </Typography>
+          <Typography variant="caption" display="block">{Math.round(allocation.plannedHours * 100) / 100}h planned</Typography>
           {allocation.notes && (
             <Typography variant="caption" display="block" sx={{ fontStyle: 'italic', mt: 0.5 }}>
               {allocation.notes}
@@ -186,7 +290,7 @@ function AllocationBlock({
           {allocation.projectName}
         </span>
         <span style={{ opacity: 0.9, marginLeft: 4, flexShrink: 0 }}>
-          {allocation.plannedHours}h
+          {hoursToShow % 1 === 0 ? hoursToShow : hoursToShow.toFixed(1)}h
         </span>
 
         {/* Drag handle for extending - visible on hover */}
@@ -227,6 +331,13 @@ function AllocationBlock({
 }
 
 /**
+ * Map day index (0=Sun, 1=Mon, ..., 6=Sat) to work schedule keys
+ */
+const DAY_TO_SCHEDULE_KEY: Record<number, 'sun' | 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat'> = {
+  0: 'sun', 1: 'mon', 2: 'tue', 3: 'wed', 4: 'thu', 5: 'fri', 6: 'sat'
+};
+
+/**
  * Week cell for a user
  */
 function WeekCellComponent({
@@ -238,6 +349,7 @@ function WeekCellComponent({
   isDragTarget,
   isReadOnly,
   viewMode = 'month',
+  workSchedule,
 }: {
   cell: WeekCell;
   userId: string;
@@ -247,8 +359,45 @@ function WeekCellComponent({
   isDragTarget?: boolean;
   isReadOnly?: boolean;
   viewMode?: ViewMode;
+  workSchedule?: { mon: number; tue: number; wed: number; thu: number; fri: number; sat: number; sun: number } | null;
 }) {
   const isCurrent = isCurrentWeek(cell.weekStart, viewMode);
+  const overThreshold = viewMode === 'week' || viewMode === 'day' ? 8 : 40;
+
+  // Filter out 0h allocations for display
+  const filteredAllocations = cell.allocations.filter(a => a.plannedHours > 0);
+
+  // Determine unavailability based on work schedule and PTO
+  // Only applies in week/day view (single-day cells)
+  const cellDate = new Date(cell.date + 'T00:00:00');
+  const dayOfWeek = cellDate.getDay();
+  const dayKey = DAY_TO_SCHEDULE_KEY[dayOfWeek];
+
+  // Get available hours for this day (default to 8 for standard schedule)
+  const hoursAvailable = workSchedule?.[dayKey] ?? (dayOfWeek === 0 || dayOfWeek === 6 ? 0 : 8);
+
+  // Check for full-day PTO
+  const hasPto = cell.ptoEntries && cell.ptoEntries.length > 0;
+  const isFullDayPto = hasPto && cell.ptoHours && cell.ptoHours >= 8;
+
+  // Determine unavailability status (only in week/day view)
+  // Show stripes ONLY when hours === 0 (not for reduced hours like 3h)
+  const isUnavailable = (viewMode === 'week' || viewMode === 'day') && (hoursAvailable === 0 || isFullDayPto);
+
+  // Diagonal stripe styles for unavailable days (0h only)
+  const unavailabilityStyles = isUnavailable ? {
+    '&::before': {
+      content: '""',
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      pointerEvents: 'none',
+      zIndex: 1,
+      background: 'repeating-linear-gradient(-45deg, transparent, transparent 8px, rgba(255, 255, 255, 0.06) 8px, rgba(255, 255, 255, 0.06) 10px)',
+    },
+  } : {};
 
   return (
     <Box
@@ -272,21 +421,29 @@ function WeekCellComponent({
           outlineColor: 'primary.main',
           outlineOffset: -2,
         }),
+        // Diagonal stripes for unavailable/reduced hours days
+        ...unavailabilityStyles,
       }}
     >
-      {/* Allocations */}
-      {cell.allocations.map((allocation) => (
+      {/* PTO entries */}
+      {cell.ptoEntries && cell.ptoEntries.map((pto) => (
+        <PtoBadge key={pto.id} ptoData={pto} />
+      ))}
+
+      {/* Allocations - 0h allocations already filtered via filteredAllocations */}
+      {filteredAllocations.map((allocation) => (
         <AllocationBlock
           key={allocation.id}
           allocation={allocation}
           onClick={() => onAllocationClick?.(allocation)}
           onDragExtendStart={onDragExtendStart}
           isReadOnly={isReadOnly}
+          showDateRange={viewMode !== 'week'}
         />
       ))}
-      
+
       {/* Empty state with add button */}
-      {cell.allocations.length === 0 && (
+      {filteredAllocations.length === 0 && !cell.ptoEntries && (
         <Box
           sx={{
             display: 'flex',
@@ -313,9 +470,9 @@ function WeekCellComponent({
           </IconButton>
         </Box>
       )}
-      
+
       {/* Add button for cells with allocations */}
-      {cell.allocations.length > 0 && cell.totalHours < 40 && (
+      {(filteredAllocations.length > 0 || cell.ptoEntries) && cell.totalHours < overThreshold && (
         <IconButton
           size="small"
           onClick={onAddClick}
@@ -336,7 +493,7 @@ function WeekCellComponent({
           <AddIcon fontSize="small" />
         </IconButton>
       )}
-      
+
       {/* Total hours */}
       {cell.totalHours > 0 && (
         <Box
@@ -356,10 +513,10 @@ function WeekCellComponent({
               fontWeight: cell.isOverAllocated ? 600 : 400,
             }}
           >
-            {cell.totalHours}h
+            {Math.round(cell.totalHours * 100) / 100}h
           </Typography>
           {cell.isOverAllocated && (
-            <Tooltip title="Over 40 hours">
+            <Tooltip title={`Over ${overThreshold} hours`}>
               <WarningIcon sx={{ fontSize: 14, color: 'error.main' }} />
             </Tooltip>
           )}
@@ -395,7 +552,7 @@ function UserRow({
   viewMode?: ViewMode;
   nameColumnWidth?: number;
 }) {
-  const { user, weeks: weekCells, averageUtilization } = userData;
+  const { user, weeks: weekCells, averageUtilization, maxCapacityHours, totalAllocatedHours } = userData;
 
   // Utilization color
   const utilizationColor =
@@ -445,9 +602,9 @@ function UserRow({
           size="sm"
         />
         <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography 
-            variant="body2" 
-            fontWeight={500} 
+          <Typography
+            variant="body2"
+            fontWeight={500}
             noWrap
             sx={{
               color: onUserClick ? 'primary.main' : 'text.primary',
@@ -456,12 +613,50 @@ function UserRow({
           >
             {user.name}
           </Typography>
-          <Typography variant="caption" color="text.secondary">
-            {Math.round(averageUtilization)}% utilized
-          </Typography>
+          <Tooltip
+            title={
+              user.hasCustomSchedule ? (
+                <Box>
+                  <Typography variant="caption" display="block">
+                    Custom schedule: {user.weeklyCapacity}h/week
+                  </Typography>
+                  {user.workSchedule && (
+                    <Typography variant="caption" display="block" sx={{ opacity: 0.8 }}>
+                      M:{user.workSchedule.mon} T:{user.workSchedule.tue} W:{user.workSchedule.wed} Th:{user.workSchedule.thu} F:{user.workSchedule.fri}
+                    </Typography>
+                  )}
+                </Box>
+              ) : `${Math.round(totalAllocatedHours)}h of ${Math.round(maxCapacityHours)}h capacity`
+            }
+          >
+            <Typography
+              variant="caption"
+              sx={{
+                color: user.hasCustomSchedule ? 'info.main' : 'text.secondary',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 0.5,
+              }}
+            >
+              {Math.round(averageUtilization)}% utilized
+              {user.hasCustomSchedule && (
+                <Chip
+                  label={`${user.weeklyCapacity}h/wk`}
+                  size="small"
+                  sx={{
+                    height: 16,
+                    fontSize: '0.65rem',
+                    bgcolor: 'info.main',
+                    color: 'info.contrastText',
+                    '& .MuiChip-label': { px: 0.5 },
+                  }}
+                />
+              )}
+            </Typography>
+          </Tooltip>
         </Box>
       </Box>
-      
+
       {/* Week cells */}
       {weeks.map((weekStart) => (
         <WeekCellComponent
@@ -474,6 +669,7 @@ function UserRow({
           isDragTarget={dragTargetWeeks?.includes(weekStart)}
           isReadOnly={isReadOnly}
           viewMode={viewMode}
+          workSchedule={user.workSchedule}
         />
       ))}
     </Box>
@@ -482,89 +678,439 @@ function UserRow({
 
 /**
  * Add/Edit Allocation Dialog
+ * Updated 2026-01-29: Supports single-day allocations with group editing
+ * - New allocation: single day + "expand to week" checkbox
+ * - Edit single tile: just edit that day's hours
+ * - Edit bar (group): show "Edit All Days" button + individual day tiles
  */
 function AllocationDialog({
   open,
   onClose,
   onSave,
+  onDelete,
+  onUpdateGroup,
+  onDeleteGroup,
   allocation,
+  allocationGroup,
   userId,
   userName,
-  weekStart,
+  clickedDate,
   projects,
+  viewMode = 'week',
 }: {
   open: boolean;
   onClose: () => void;
   onSave: (data: {
     projectId: string;
+    startDate: string;
+    endDate: string;
     plannedHours: number;
     notes: string;
     isBillable: boolean;
+    expandToWeek?: boolean;
   }) => void;
+  onDelete?: (id: string) => void;
+  onUpdateGroup?: (allocationIds: string[], updates: { plannedHours?: number; notes?: string | null }) => void;
+  onDeleteGroup?: (allocationIds: string[]) => void;
   allocation?: CalendarAllocation;
+  allocationGroup?: AllocationGroup;
   userId: string;
   userName: string;
-  weekStart: string;
-  projects: Array<{ id: string; name: string; color: string }>;
+  clickedDate: string;
+  projects: Array<{ id: string; name: string; color: string; priority?: number | null }>;
+  viewMode?: ViewMode;
 }) {
   const [projectId, setProjectId] = useState(allocation?.projectId || '');
+  const [startDate, setStartDate] = useState(allocation?.startDate || clickedDate);
+  const [endDate, setEndDate] = useState(allocation?.endDate || clickedDate);
   const [plannedHours, setPlannedHours] = useState(allocation?.plannedHours || 8);
   const [notes, setNotes] = useState(allocation?.notes || '');
   const [isBillable, setIsBillable] = useState(allocation?.isBillable ?? true);
-  
+  const [useWholeWeek, setUseWholeWeek] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [editMode, setEditMode] = useState<'all' | 'single'>('all');
+  const [selectedDayId, setSelectedDayId] = useState<string | null>(null);
+  const [groupHoursPerDay, setGroupHoursPerDay] = useState(allocationGroup?.hoursPerDay || 8);
+
+  // Sort projects by priority (lower number = higher priority), then by name
+  const sortedProjects = useMemo(() => {
+    return [...projects].sort((a, b) => {
+      // Projects with priority come first, sorted by priority (ascending)
+      const aPriority = a.priority ?? 9999;
+      const bPriority = b.priority ?? 9999;
+      if (aPriority !== bPriority) return aPriority - bPriority;
+      // Then sort alphabetically by name
+      return a.name.localeCompare(b.name);
+    });
+  }, [projects]);
+
+  // Get selected project object
+  const selectedProject = sortedProjects.find(p => p.id === projectId) || null;
+
+  // Reset state when dialog opens
+  React.useEffect(() => {
+    if (open) {
+      setProjectId(allocation?.projectId || allocationGroup?.projectId || '');
+      setStartDate(allocation?.startDate || clickedDate);
+      setEndDate(allocation?.endDate || clickedDate);
+      setPlannedHours(allocation?.plannedHours || 8);
+      setNotes(allocation?.notes || allocationGroup?.notes || '');
+      setIsBillable(allocation?.isBillable ?? allocationGroup?.isBillable ?? true);
+      setUseWholeWeek(false);
+      setConfirmDelete(false);
+      setEditMode('all');
+      setSelectedDayId(null);
+      setGroupHoursPerDay(allocationGroup?.hoursPerDay || 8);
+    }
+  }, [open, allocation, allocationGroup, clickedDate]);
+
+  // Handle "Allocate for whole week" checkbox
+  // Updated: Now creates 5 single-day records at 8h each (not 40h total)
+  const handleWholeWeekToggle = (checked: boolean) => {
+    setUseWholeWeek(checked);
+    if (checked) {
+      const monday = getWeekMonday(clickedDate);
+      setStartDate(monday);
+      setEndDate(monday); // Will expand to week via expandToWeek flag
+      setPlannedHours(8); // 8h per day
+    } else {
+      setStartDate(clickedDate);
+      setEndDate(clickedDate);
+      setPlannedHours(8);
+    }
+  };
+
   const handleSave = () => {
     if (!projectId) return;
-    onSave({ projectId, plannedHours, notes, isBillable });
+    if (plannedHours <= 0) {
+      // If hours are 0 or negative, delete the allocation instead
+      if (allocation && onDelete) {
+        onDelete(allocation.id);
+        onClose();
+        return;
+      }
+      // When editing a single day from a group
+      if (selectedDayId && onDelete) {
+        onDelete(selectedDayId);
+        onClose();
+        return;
+      }
+    }
+    onSave({
+      projectId,
+      startDate,
+      endDate,
+      plannedHours,
+      notes,
+      isBillable,
+      expandToWeek: useWholeWeek,
+    });
     onClose();
   };
-  
+
+  // Handle saving a single day from a group (updates just that allocation)
+  const handleSaveSingleDay = () => {
+    if (selectedDayId && onUpdateGroup) {
+      if (plannedHours <= 0) {
+        // Delete this day's allocation
+        if (onDelete) {
+          onDelete(selectedDayId);
+          onClose();
+        }
+        return;
+      }
+      // Update just this one allocation
+      onUpdateGroup([selectedDayId], {
+        plannedHours,
+        notes: notes || null,
+      });
+      onClose();
+    }
+  };
+
+  // Handle "Edit All Days" for group
+  const handleSaveGroup = () => {
+    if (allocationGroup && onUpdateGroup) {
+      onUpdateGroup(allocationGroup.allocationIds, {
+        plannedHours: groupHoursPerDay,
+        notes: notes || null,
+      });
+      onClose();
+    }
+  };
+
+  // Handle delete for single allocation
+  const handleDelete = () => {
+    // Standard single allocation
+    if (allocation && onDelete) {
+      onDelete(allocation.id);
+      onClose();
+      return;
+    }
+    // Single day from a group
+    if (selectedDayId && onDelete) {
+      onDelete(selectedDayId);
+      onClose();
+    }
+  };
+
+  // Handle delete for entire group
+  const handleDeleteGroup = () => {
+    if (allocationGroup && onDeleteGroup) {
+      onDeleteGroup(allocationGroup.allocationIds);
+      onClose();
+    }
+  };
+
+  // Helper: generate list of dates in a group for day chip display
+  const getGroupDates = (): { id: string; date: string; dayName: string }[] => {
+    if (!allocationGroup) return [];
+    const dates: { id: string; date: string; dayName: string }[] = [];
+    const start = new Date(allocationGroup.startDate + 'T00:00:00');
+    const end = new Date(allocationGroup.endDate + 'T00:00:00');
+    let idIndex = 0;
+
+    const current = new Date(start);
+    while (current <= end) {
+      const dayOfWeek = current.getDay();
+      // Skip weekends
+      if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+        const dateStr = current.toISOString().split('T')[0];
+        const dayName = current.toLocaleDateString('en-US', { weekday: 'short' });
+        dates.push({
+          id: allocationGroup.allocationIds[idIndex] || allocationGroup.id,
+          date: dateStr,
+          dayName,
+        });
+        idIndex++;
+      }
+      current.setDate(current.getDate() + 1);
+    }
+    return dates;
+  };
+
+  const daysSpan = daysBetween(startDate, endDate);
+  const isEditingGroup = allocationGroup && allocationGroup.isBar && editMode === 'all';
+  const groupDates = getGroupDates();
+
+  // When editing a group (bar) AND in 'all' mode, show the group view
+  // When editMode is 'single', fall through to the single allocation edit form
+  if (allocationGroup && allocationGroup.isBar && editMode === 'all') {
+    return (
+      <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+        <DialogTitle>Edit Allocation Group</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            {/* Group summary */}
+            <Alert
+              severity="info"
+              icon={false}
+              sx={{ bgcolor: allocationGroup.projectColor + '20' }}
+            >
+              <Typography variant="body2">
+                <strong>{allocationGroup.projectName}</strong>
+              </Typography>
+              <Typography variant="body2">
+                {formatDateRange(allocationGroup.startDate, allocationGroup.endDate)} ({allocationGroup.dayCount} days @ {Math.round(allocationGroup.hoursPerDay * 100) / 100}h/day)
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Total: {Math.round(allocationGroup.totalHours * 100) / 100}h
+              </Typography>
+            </Alert>
+
+            {/* Edit All section */}
+            <Box>
+              <Typography variant="subtitle2" gutterBottom>Edit All Days</Typography>
+              <Stack direction="row" spacing={2} alignItems="flex-start">
+                <TextField
+                  label="Hours per day"
+                  type="number"
+                  size="small"
+                  value={groupHoursPerDay}
+                  onChange={(e) => setGroupHoursPerDay(Number(e.target.value))}
+                  inputProps={{ min: 0, max: 24, step: 0.5 }}
+                  sx={{ width: 140 }}
+                />
+                <Button
+                  variant="contained"
+                  onClick={handleSaveGroup}
+                  disabled={groupHoursPerDay === allocationGroup.hoursPerDay}
+                >
+                  Apply to All Days
+                </Button>
+              </Stack>
+            </Box>
+
+            <Divider />
+
+            {/* Individual day tiles */}
+            <Box>
+              <Typography variant="subtitle2" gutterBottom>
+                Or edit individual days:
+              </Typography>
+              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                {groupDates.map(({ id, date, dayName }) => (
+                  <Chip
+                    key={id}
+                    label={`${dayName} ${Math.round(allocationGroup.hoursPerDay * 100) / 100}h`}
+                    onClick={() => {
+                      // Find the specific allocation for this day
+                      setSelectedDayId(id);
+                      setEditMode('single');
+                      setStartDate(date);
+                      setEndDate(date);
+                      setPlannedHours(allocationGroup.hoursPerDay);
+                    }}
+                    sx={{
+                      bgcolor: allocationGroup.projectColor,
+                      color: '#fff',
+                      '&:hover': {
+                        bgcolor: allocationGroup.projectColor,
+                        filter: 'brightness(0.9)',
+                      },
+                    }}
+                  />
+                ))}
+              </Stack>
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                Click a day to edit it individually (will split the bar)
+              </Typography>
+            </Box>
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ justifyContent: 'space-between' }}>
+          <Box>
+            {confirmDelete ? (
+              <Stack direction="row" spacing={1}>
+                <Button
+                  color="error"
+                  variant="contained"
+                  startIcon={<DeleteIcon />}
+                  onClick={handleDeleteGroup}
+                >
+                  Delete All {allocationGroup.dayCount} Days
+                </Button>
+                <Button onClick={() => setConfirmDelete(false)}>Cancel</Button>
+              </Stack>
+            ) : (
+              <Button
+                color="error"
+                startIcon={<DeleteIcon />}
+                onClick={() => setConfirmDelete(true)}
+              >
+                Delete Group
+              </Button>
+            )}
+          </Box>
+          <Button onClick={onClose}>Close</Button>
+        </DialogActions>
+      </Dialog>
+    );
+  }
+
+  // Determine if we're editing a single day from a group
+  const isEditingSingleDayFromGroup = !!(selectedDayId && allocationGroup);
+
+  // Single allocation edit / new allocation (existing behavior)
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>
-        {allocation ? 'Edit Allocation' : 'Add Allocation'}
+        {isEditingSingleDayFromGroup
+          ? `Edit Single Day - ${allocationGroup.projectName}`
+          : allocation
+            ? 'Edit Allocation'
+            : 'Add Allocation'
+        }
       </DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ mt: 1 }}>
           <Alert severity="info" icon={false}>
             <Typography variant="body2">
-              <strong>{userName}</strong> — Week of {formatWeekLabel(weekStart)}
+              <strong>{userName}</strong> — {formatDateRange(startDate, endDate)}
+              {daysSpan > 1 && ` (${daysSpan} days)`}
             </Typography>
           </Alert>
-          
-          <FormControl fullWidth>
-            <InputLabel>Project</InputLabel>
-            <Select
-              value={projectId}
-              label="Project"
-              onChange={(e) => setProjectId(e.target.value)}
-            >
-              {projects.map((project) => (
-                <MenuItem key={project.id} value={project.id}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Box
-                      sx={{
-                        width: 12,
-                        height: 12,
-                        borderRadius: '50%',
-                        bgcolor: project.color,
-                      }}
-                    />
-                    {project.name}
-                  </Box>
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          
+
+          {/* Searchable Project Autocomplete - disabled when editing single day from group */}
+          <Autocomplete
+            value={selectedProject}
+            onChange={(_, newValue) => setProjectId(newValue?.id || '')}
+            options={sortedProjects}
+            getOptionLabel={(option) => option.name}
+            isOptionEqualToValue={(option, value) => option.id === value.id}
+            disabled={isEditingSingleDayFromGroup}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Project"
+                placeholder="Search projects..."
+              />
+            )}
+            renderOption={(props, option) => (
+              <Box component="li" {...props} key={option.id}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
+                  <Box
+                    sx={{
+                      width: 12,
+                      height: 12,
+                      borderRadius: '50%',
+                      bgcolor: option.color,
+                      flexShrink: 0,
+                    }}
+                  />
+                  <Typography sx={{ flex: 1 }}>{option.name}</Typography>
+                  {option.priority && option.priority <= 10 && (
+                    <Typography variant="caption" color="text.secondary">
+                      P{option.priority}
+                    </Typography>
+                  )}
+                </Box>
+              </Box>
+            )}
+            fullWidth
+            autoHighlight
+            openOnFocus
+          />
+
+          {/* Date range inputs - only for new allocations */}
+          {!allocation && !allocationGroup && (
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={useWholeWeek}
+                  onChange={(e) => handleWholeWeekToggle(e.target.checked)}
+                />
+              }
+              label="Allocate for whole week (Mon-Fri, 8h per day)"
+            />
+          )}
+
+          {!useWholeWeek && (
+            <Stack direction="row" spacing={2}>
+              <TextField
+                label="Date"
+                type="date"
+                value={startDate}
+                onChange={(e) => {
+                  setStartDate(e.target.value);
+                  setEndDate(e.target.value); // Keep single-day
+                }}
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+              />
+            </Stack>
+          )}
+
           <TextField
-            label="Planned Hours"
+            label="Hours (for this day)"
             type="number"
             value={plannedHours}
             onChange={(e) => setPlannedHours(Number(e.target.value))}
-            inputProps={{ min: 0, max: 80, step: 1 }}
+            inputProps={{ min: 0, max: 24, step: 0.5 }}
             fullWidth
+            helperText={useWholeWeek ? '8h per day × 5 days = 40h total' : undefined}
           />
-          
+
           <TextField
             label="Notes (optional)"
             value={notes}
@@ -573,7 +1119,7 @@ function AllocationDialog({
             rows={2}
             fullWidth
           />
-          
+
           <FormControl fullWidth>
             <InputLabel>Billable</InputLabel>
             <Select
@@ -587,11 +1133,63 @@ function AllocationDialog({
           </FormControl>
         </Stack>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={handleSave} variant="contained" disabled={!projectId}>
-          {allocation ? 'Save Changes' : 'Add Allocation'}
-        </Button>
+      <DialogActions sx={{ justifyContent: (allocation || isEditingSingleDayFromGroup) ? 'space-between' : 'flex-end' }}>
+        {/* Delete button - show when editing an allocation or single day from group */}
+        {(allocation || isEditingSingleDayFromGroup) && onDelete && (
+          <Box>
+            {confirmDelete ? (
+              <Stack direction="row" spacing={1}>
+                <Button
+                  color="error"
+                  variant="contained"
+                  startIcon={<DeleteIcon />}
+                  onClick={handleDelete}
+                >
+                  Confirm Delete
+                </Button>
+                <Button onClick={() => setConfirmDelete(false)}>
+                  Cancel
+                </Button>
+              </Stack>
+            ) : (
+              <Button
+                color="error"
+                startIcon={<DeleteIcon />}
+                onClick={() => setConfirmDelete(true)}
+              >
+                Delete{isEditingSingleDayFromGroup ? ' This Day' : ''}
+              </Button>
+            )}
+          </Box>
+        )}
+
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          {/* Back to Group button when editing single day from group */}
+          {isEditingSingleDayFromGroup && (
+            <Button
+              onClick={() => {
+                setEditMode('all');
+                setSelectedDayId(null);
+                setConfirmDelete(false);
+              }}
+            >
+              ← Back to Group
+            </Button>
+          )}
+          <Button onClick={onClose}>Cancel</Button>
+          <Button
+            onClick={isEditingSingleDayFromGroup ? handleSaveSingleDay : handleSave}
+            variant="contained"
+            disabled={!projectId && !isEditingSingleDayFromGroup}
+          >
+            {isEditingSingleDayFromGroup
+              ? 'Save This Day'
+              : allocation
+                ? 'Save Changes'
+                : 'Add Allocation'
+            }
+          </Button>
+        </Box>
       </DialogActions>
     </Dialog>
   );
@@ -642,8 +1240,9 @@ export function ResourceCalendar({
   const [dialogContext, setDialogContext] = useState<{
     userId: string;
     userName: string;
-    weekStart: string;
+    clickedDate: string;
     allocation?: CalendarAllocation;
+    allocationGroup?: AllocationGroup;
   } | null>(null);
 
   // Calculate weeks to show based on view mode
@@ -654,9 +1253,15 @@ export function ResourceCalendar({
     weeks,
     loading,
     error,
+    allocationGroups,
     createAllocation,
     updateAllocation,
+    updateAllocationGroup,
+    deleteAllocation,
+    deleteAllocationGroup,
+    extendAllocation,
     repeatLastWeek,
+    getGroupsForUser,
   } = useResourceCalendar({
     orgId,
     startDate,
@@ -664,7 +1269,7 @@ export function ResourceCalendar({
     viewMode,
   });
 
-  // Snackbar state for Repeat Last Week feedback
+  // Snackbar state for feedback
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'info' | 'error' }>({
     open: false,
     message: '',
@@ -674,8 +1279,8 @@ export function ResourceCalendar({
   // Drag-to-extend state
   const [dragExtendState, setDragExtendState] = useState<{
     allocation: CalendarAllocation | null;
-    startWeek: string;
-    targetWeeks: string[];
+    startDate: string;
+    targetDate: string | null;
     userId: string;
   } | null>(null);
 
@@ -684,8 +1289,8 @@ export function ResourceCalendar({
     console.log('🎯 Drag extend started for:', allocation.projectName);
     setDragExtendState({
       allocation,
-      startWeek: allocation.weekStart,
-      targetWeeks: [],
+      startDate: allocation.startDate,
+      targetDate: null,
       userId: allocation.userId,
     });
 
@@ -695,30 +1300,15 @@ export function ResourceCalendar({
       const elements = document.elementsFromPoint(e.clientX, e.clientY);
       const weekCell = elements.find(el => el.getAttribute('data-week-start'));
       if (weekCell) {
-        const weekStart = weekCell.getAttribute('data-week-start');
+        const cellDate = weekCell.getAttribute('data-week-start');
         const targetUserId = weekCell.getAttribute('data-user-id');
 
-        if (weekStart && targetUserId === allocation.userId) {
-          // Only allow extending to future weeks for the same user
-          if (weekStart > allocation.weekStart) {
-            setDragExtendState(prev => {
-              if (!prev) return null;
-
-              // Calculate all weeks between start and target
-              const allTargetWeeks: string[] = [];
-              let currentWeek = new Date(prev.startWeek + 'T00:00:00');
-              const targetDate = new Date(weekStart + 'T00:00:00');
-
-              while (currentWeek <= targetDate) {
-                const weekStr = currentWeek.toISOString().split('T')[0];
-                if (weekStr > prev.startWeek) {
-                  allTargetWeeks.push(weekStr);
-                }
-                currentWeek.setDate(currentWeek.getDate() + 7);
-              }
-
-              return { ...prev, targetWeeks: allTargetWeeks };
-            });
+        if (cellDate && targetUserId === allocation.userId) {
+          // Only allow extending to dates after the current end date
+          if (cellDate > allocation.endDate) {
+            setDragExtendState(prev => prev ? { ...prev, targetDate: cellDate } : null);
+          } else {
+            setDragExtendState(prev => prev ? { ...prev, targetDate: null } : null);
           }
         }
       }
@@ -728,58 +1318,66 @@ export function ResourceCalendar({
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
 
-      // Get final state and create allocations
+      // Get final state and update allocation
       setDragExtendState(prev => {
-        if (!prev || !prev.allocation || prev.targetWeeks.length === 0) {
+        if (!prev || !prev.allocation || !prev.targetDate) {
           return null;
         }
 
-        // Create allocations for each target week
-        const createAllocations = async () => {
+        // Update the allocation's end date
+        const doExtend = async () => {
           try {
-            for (const weekStart of prev.targetWeeks) {
-              await createAllocation({
-                userId: prev.allocation!.userId,
-                projectId: prev.allocation!.projectId,
-                phaseId: prev.allocation!.phaseId || undefined,
-                weekStart,
-                plannedHours: prev.allocation!.plannedHours,
-                createdBy: currentUserId,
-              });
-            }
+            await extendAllocation(prev.allocation!.id, prev.targetDate!);
             setSnackbar({
               open: true,
-              message: `Extended allocation to ${prev.targetWeeks.length} more week${prev.targetWeeks.length === 1 ? '' : 's'}`,
+              message: `Extended allocation to ${formatWeekLabel(prev.targetDate!)}`,
               severity: 'success',
             });
           } catch (err) {
             console.error('Failed to extend allocation:', err);
             setSnackbar({
               open: true,
-              message: 'Failed to extend allocation',
+              message: `Failed to extend allocation: ${err instanceof Error ? err.message : 'Unknown error'}`,
               severity: 'error',
             });
           }
         };
 
-        createAllocations();
+        doExtend();
         return null;
       });
     };
 
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
-  }, [createAllocation, currentUserId]);
+  }, [extendAllocation]);
+
+  // Calculate drag target dates (all dates from original end to target)
+  const dragTargetDates = useMemo(() => {
+    if (!dragExtendState?.targetDate || !dragExtendState?.allocation) return [];
+
+    const targets: string[] = [];
+    const current = new Date(dragExtendState.allocation.endDate + 'T00:00:00');
+    const target = new Date(dragExtendState.targetDate + 'T00:00:00');
+
+    current.setDate(current.getDate() + 1);
+    while (current <= target) {
+      targets.push(current.toISOString().split('T')[0]);
+      current.setDate(current.getDate() + 1);
+    }
+
+    return targets;
+  }, [dragExtendState]);
 
   // Group users by discipline, sorted alphabetically within each group
   const groupedByDiscipline = useMemo(() => {
     const groups: Record<string, UserWeekData[]> = {};
-    
+
     // Sort all users alphabetically first
-    const sortedData = [...rawGridData].sort((a, b) => 
+    const sortedData = [...rawGridData].sort((a, b) =>
       a.user.name.localeCompare(b.user.name)
     );
-    
+
     // Group by normalized discipline
     sortedData.forEach((userData) => {
       const discipline = normalizeDiscipline(userData.user.discipline);
@@ -788,7 +1386,7 @@ export function ResourceCalendar({
       }
       groups[discipline].push(userData);
     });
-    
+
     return groups;
   }, [rawGridData]);
 
@@ -808,9 +1406,15 @@ export function ResourceCalendar({
 
   const goToToday = () => {
     const today = new Date();
-    const day = today.getDay();
-    const diff = today.getDate() - day + (day === 0 ? -6 : 1);
-    setStartDate(new Date(today.setDate(diff)));
+    if (viewMode === 'day') {
+      // Day view: go to actual today
+      setStartDate(today);
+    } else {
+      // Week/Month view: go to Monday of current week
+      const day = today.getDay();
+      const diff = today.getDate() - day + (day === 0 ? -6 : 1);
+      setStartDate(new Date(new Date().setDate(diff)));
+    }
   };
 
   // Get navigation tooltip text based on view mode
@@ -825,68 +1429,104 @@ export function ResourceCalendar({
 
   // Get column width based on view mode
   const nameColumnWidth = COLUMN_WIDTHS[viewMode].name;
-  
+
   // Dialog handlers
-  const handleAddClick = (userId: string, weekStart: string) => {
+  const handleAddClick = (userId: string, clickedDate: string) => {
     const user = gridData.find(u => u.user.id === userId)?.user;
     if (user) {
       setDialogContext({
         userId,
         userName: user.name,
-        weekStart,
+        clickedDate,
       });
       setDialogOpen(true);
     }
   };
-  
+
   const handleAllocationClick = (allocation: CalendarAllocation) => {
     const user = gridData.find(u => u.user.id === allocation.userId)?.user;
     if (user) {
+      // Check if this allocation is part of a multi-day group (bar)
+      const group = allocationGroups.find(g =>
+        g.allocationIds.includes(allocation.id) && g.isBar
+      );
+
       setDialogContext({
         userId: allocation.userId,
         userName: user.name,
-        weekStart: allocation.weekStart,
-        allocation,
+        clickedDate: allocation.startDate,
+        allocation: group ? undefined : allocation, // Only pass allocation if not in a group
+        allocationGroup: group,
       });
       setDialogOpen(true);
     }
   };
-  
+
   const handleDialogSave = async (data: {
     projectId: string;
+    startDate: string;
+    endDate: string;
     plannedHours: number;
     notes: string;
     isBillable: boolean;
+    expandToWeek?: boolean;
   }) => {
     if (!dialogContext) return;
-    
+
     try {
       if (dialogContext.allocation) {
-        // Update existing
+        // Update existing single allocation
         await updateAllocation(dialogContext.allocation.id, {
           projectId: data.projectId,
+          startDate: data.startDate,
+          endDate: data.startDate, // Single-day model: start = end
           plannedHours: data.plannedHours,
           notes: data.notes || null,
           isBillable: data.isBillable,
         });
+        setSnackbar({
+          open: true,
+          message: 'Allocation updated',
+          severity: 'success',
+        });
       } else {
-        // Create new
+        // Create new allocation(s)
         await createAllocation({
           userId: dialogContext.userId,
           projectId: data.projectId,
-          weekStart: dialogContext.weekStart,
+          startDate: data.startDate,
+          endDate: data.startDate, // Single-day model
           plannedHours: data.plannedHours,
           notes: data.notes,
           isBillable: data.isBillable,
           createdBy: currentUserId,
+          expandToWeek: data.expandToWeek,
+        });
+        setSnackbar({
+          open: true,
+          message: data.expandToWeek ? 'Week allocations added (5 days @ 8h each)' : 'Allocation added',
+          severity: 'success',
         });
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to save allocation:', err);
-      // TODO: Show error toast
+
+      // Provide user-friendly error messages
+      let message = 'Failed to save allocation';
+      if (err?.code === '23505' || err?.message?.includes('duplicate') || err?.status === 409) {
+        message = 'An allocation already exists for this date';
+      } else if (err?.message) {
+        message = err.message;
+      }
+
+      setSnackbar({
+        open: true,
+        message,
+        severity: 'error',
+      });
     }
   };
-  
+
   if (error) {
     return (
       <Alert severity="error">
@@ -894,7 +1534,7 @@ export function ResourceCalendar({
       </Alert>
     );
   }
-  
+
   return (
     <Box>
       {/* Header */}
@@ -946,7 +1586,7 @@ export function ResourceCalendar({
                 onClick={async () => {
                   try {
                     // Use the first week in view as target
-                    const targetWeek = weeks[0];
+                    const targetWeek = getWeekMonday(weeks[0]);
                     const count = await repeatLastWeek(targetWeek, currentUserId);
                     if (count === 0) {
                       setSnackbar({
@@ -985,10 +1625,10 @@ export function ResourceCalendar({
           )}
         </Stack>
       </Stack>
-      
+
       {/* Loading indicator */}
       {loading && <LinearProgress sx={{ mb: 2 }} />}
-      
+
       {/* Calendar grid */}
       <Paper sx={{ overflow: 'auto' }}>
         {/* Header row */}
@@ -1045,7 +1685,7 @@ export function ResourceCalendar({
             </Box>
           ))}
         </Box>
-        
+
         {/* User rows grouped by discipline */}
         {DISCIPLINE_ORDER.filter(disc => groupedByDiscipline[disc]?.length > 0).map((discipline) => (
           <React.Fragment key={discipline}>
@@ -1095,7 +1735,7 @@ export function ResourceCalendar({
                 onDragExtendStart={handleDragExtendStart}
                 dragTargetWeeks={
                   dragExtendState?.userId === userData.user.id
-                    ? dragExtendState.targetWeeks
+                    ? dragTargetDates
                     : undefined
                 }
                 onUserClick={onUserClick}
@@ -1106,7 +1746,7 @@ export function ResourceCalendar({
             ))}
           </React.Fragment>
         ))}
-        
+
         {/* Empty state */}
         {!loading && gridData.length === 0 && (
           <Box sx={{ p: 4, textAlign: 'center' }}>
@@ -1116,7 +1756,7 @@ export function ResourceCalendar({
           </Box>
         )}
       </Paper>
-      
+
       {/* Add/Edit Dialog */}
       {dialogContext && (
         <AllocationDialog
@@ -1126,11 +1766,64 @@ export function ResourceCalendar({
             setDialogContext(null);
           }}
           onSave={handleDialogSave}
+          onDelete={async (id: string) => {
+            try {
+              await deleteAllocation(id);
+              setSnackbar({
+                open: true,
+                message: 'Allocation deleted',
+                severity: 'success',
+              });
+            } catch (err) {
+              console.error('Failed to delete allocation:', err);
+              setSnackbar({
+                open: true,
+                message: 'Failed to delete allocation',
+                severity: 'error',
+              });
+            }
+          }}
+          onUpdateGroup={async (ids: string[], updates: { plannedHours?: number; notes?: string | null }) => {
+            try {
+              await updateAllocationGroup(ids, updates);
+              setSnackbar({
+                open: true,
+                message: `Updated ${ids.length} allocations`,
+                severity: 'success',
+              });
+            } catch (err) {
+              console.error('Failed to update allocation group:', err);
+              setSnackbar({
+                open: true,
+                message: 'Failed to update allocation group',
+                severity: 'error',
+              });
+            }
+          }}
+          onDeleteGroup={async (ids: string[]) => {
+            try {
+              await deleteAllocationGroup(ids);
+              setSnackbar({
+                open: true,
+                message: `Deleted ${ids.length} allocations`,
+                severity: 'success',
+              });
+            } catch (err) {
+              console.error('Failed to delete allocation group:', err);
+              setSnackbar({
+                open: true,
+                message: 'Failed to delete allocation group',
+                severity: 'error',
+              });
+            }
+          }}
           allocation={dialogContext.allocation}
+          allocationGroup={dialogContext.allocationGroup}
           userId={dialogContext.userId}
           userName={dialogContext.userName}
-          weekStart={dialogContext.weekStart}
+          clickedDate={dialogContext.clickedDate}
           projects={projects}
+          viewMode={viewMode}
         />
       )}
 
@@ -1139,8 +1832,16 @@ export function ResourceCalendar({
         open={snackbar.open}
         autoHideDuration={4000}
         onClose={() => setSnackbar({ ...snackbar, open: false })}
-        message={snackbar.message}
-      />
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }
