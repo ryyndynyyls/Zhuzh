@@ -51,6 +51,34 @@ interface AuthContextType {
   isAuthenticated: boolean;
 }
 
+const PROFILE_CACHE_KEY = 'zhuzh_user_profile';
+
+function getCachedProfile(): UserRow | null {
+  try {
+    const cached = localStorage.getItem(PROFILE_CACHE_KEY);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      // Cache valid for 24 hours
+      if (parsed._cachedAt && Date.now() - parsed._cachedAt < 24 * 60 * 60 * 1000) {
+        console.log('💾 Using cached profile for:', parsed.email);
+        const { _cachedAt, ...profile } = parsed;
+        return profile as UserRow;
+      }
+    }
+  } catch {}
+  return null;
+}
+
+function setCachedProfile(profile: UserRow) {
+  try {
+    localStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify({ ...profile, _cachedAt: Date.now() }));
+  } catch {}
+}
+
+function clearCachedProfile() {
+  try { localStorage.removeItem(PROFILE_CACHE_KEY); } catch {}
+}
+
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -74,6 +102,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       console.log('✅ Found profile:', profile);
+      setCachedProfile(profile);
       return profile;
     } catch (err) {
       console.error('❌ Error in fetchUserProfile:', err);
@@ -98,6 +127,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Check for existing session
     async function initAuth() {
       console.log('🚀 Initializing auth...');
+
+      // Try cached profile first for instant load
+      const cached = getCachedProfile();
+      if (cached) {
+        console.log('⚡ Instant load from cache:', cached.email);
+        setUser(cached);
+        setLoading(false);
+        // Still verify session in background, but don't block UI
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (!session) {
+            console.log('🚪 Session expired, logging out');
+            clearCachedProfile();
+            setUser(null);
+          } else if (session.user?.email) {
+            // Refresh profile in background
+            fetchUserProfile(session.user.email).then(profile => {
+              if (profile) setUser(profile);
+            });
+          }
+        }).catch(() => {
+          // If session check fails but we have cache, keep the user logged in
+          console.warn('⚠️ Session check failed, using cached profile');
+        });
+        return;
+      }
+
       setLoading(true);
 
       // Timeout after 30 seconds so users don't stare at a spinner forever
@@ -193,6 +248,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
+      clearCachedProfile();
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       setUser(null);
