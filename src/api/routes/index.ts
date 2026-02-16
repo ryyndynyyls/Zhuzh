@@ -14,3 +14,7 @@ export { default as dbToolsRouter } from './db-tools';
 export { default as voiceRouter } from './voice';
 export { default as teamRouter } from './team';
 export { default as timerRouter } from './timer';
+export { default as allocationsRouter } from './allocations';
+export { default as utilizationRouter } from './utilization';
+export { default as resourcesRouter } from './resources';
+export { default as confirmationsRouter } from './confirmations';

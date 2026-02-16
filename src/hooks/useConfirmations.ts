@@ -1,5 +1,13 @@
+/**
+ * useConfirmations Hook
+ *
+ * MIGRATED: REST queries now go through API server.
+ * Realtime subscriptions kept as direct Supabase WebSocket (per migration plan).
+ */
+
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabase';
+import { api } from '../lib/apiClient';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import type { TimeConfirmationRow, TimeEntryRow, UserRow } from '../types/database';
 
@@ -28,15 +36,10 @@ export function useConfirmation(userId: string | undefined, weekStart: string) {
     setError(null);
 
     try {
-      const { data, error: fetchError } = await supabase
-        .from('time_confirmations')
-        .select('*, entries:time_entries(*, project:projects(name, color))')
-        .eq('user_id', userId)
-        .eq('week_start', weekStart)
-        .maybeSingle();
-
-      if (fetchError) throw fetchError;
-      setConfirmation(data as ConfirmationWithRelations | null);
+      const data = await api.get<{ confirmation: ConfirmationWithRelations | null }>(
+        `/api/confirmations?userId=${encodeURIComponent(userId)}&weekStart=${encodeURIComponent(weekStart)}`
+      );
+      setConfirmation(data.confirmation);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to fetch confirmation'));
     } finally {
@@ -51,66 +54,18 @@ export function useConfirmation(userId: string | undefined, weekStart: string) {
   const submitConfirmation = async (entries: Array<{ allocation_id: string; actual_hours: number }>, notes?: string) => {
     if (!userId) throw new Error('User ID required');
 
-    // Create or update confirmation
-    let conf = confirmation;
-    if (!conf) {
-      const { data, error } = await supabase
-        .from('time_confirmations')
-        .insert({
-          user_id: userId,
-          week_start: weekStart,
-          status: 'submitted',
-          submitted_at: new Date().toISOString(),
-          notes
-        })
-        .select()
-        .single();
-      if (error) throw error;
-      conf = data;
-    } else {
-      const { error } = await supabase
-        .from('time_confirmations')
-        .update({
-          status: 'submitted',
-          submitted_at: new Date().toISOString(),
-          notes
-        })
-        .eq('id', conf.id);
-      if (error) throw error;
-    }
-
-    // Delete existing entries and create new ones
-    await supabase.from('time_entries').delete().eq('confirmation_id', conf!.id);
-
-    // Get allocations for planned hours
-    const { data: allocations } = await supabase
-      .from('allocations')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('week_start', weekStart);
-
-    for (const entry of entries) {
-      const alloc = allocations?.find(a => a.id === entry.allocation_id);
-      if (alloc) {
-        await supabase.from('time_entries').insert({
-          confirmation_id: conf!.id,
-          project_id: alloc.project_id,
-          phase_id: alloc.phase_id,
-          allocation_id: alloc.id,
-          planned_hours: alloc.planned_hours,
-          actual_hours: entry.actual_hours,
-          is_unplanned: false
-        });
-      }
-    }
+    await api.post('/api/confirmations/submit', {
+      userId,
+      weekStart,
+      entries,
+      notes,
+    });
 
     await fetchConfirmation();
   };
 
   return { confirmation, loading, error, refetch: fetchConfirmation, submitConfirmation };
 }
-
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3002';
 
 interface ApprovalWithWarnings extends ConfirmationWithRelations {
   totalPlanned?: number;
@@ -136,19 +91,15 @@ export function usePendingApprovals(orgId: string) {
     }
 
     // Only show loading spinner on initial load, not refetches
-    // This prevents the spinner from interrupting confetti celebrations
     if (isInitialLoad) {
       setLoading(true);
     }
     setError(null);
 
     try {
-      // Use API endpoint that uses service role key (bypasses RLS)
-      const res = await fetch(`${API_BASE}/api/approvals?orgId=${orgId}`);
-      if (!res.ok) {
-        throw new Error('Failed to fetch approvals');
-      }
-      const data = await res.json();
+      const data = await api.get<{ approvals: ApprovalWithWarnings[] }>(
+        `/api/approvals?orgId=${encodeURIComponent(orgId)}`
+      );
       setApprovals(data.approvals || []);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to fetch approvals'));
@@ -158,32 +109,29 @@ export function usePendingApprovals(orgId: string) {
   }, [orgId]);
 
   useEffect(() => {
-    fetchApprovals(true); // Initial load shows spinner
+    fetchApprovals(true);
   }, [fetchApprovals]);
 
-  // Set up Supabase Realtime subscription for time_confirmations
+  // Realtime subscription — kept as direct Supabase WebSocket
   useEffect(() => {
     if (!orgId) return;
 
-    // Clean up previous subscription
     if (channelRef.current) {
       supabase.removeChannel(channelRef.current);
     }
 
-    // Subscribe to time_confirmations changes (new submissions, approvals, rejections)
     const channel = supabase
       .channel('approvals-realtime')
       .on(
         'postgres_changes',
         {
-          event: '*', // INSERT, UPDATE, DELETE
+          event: '*',
           schema: 'public',
           table: 'time_confirmations',
         },
         (payload) => {
           console.log('📡 Approval change detected:', payload.eventType);
-          // Refetch data when any confirmation changes
-          fetchApprovals(false); // Don't show loading spinner
+          fetchApprovals(false);
         }
       )
       .subscribe((status) => {
@@ -192,7 +140,6 @@ export function usePendingApprovals(orgId: string) {
 
     channelRef.current = channel;
 
-    // Cleanup on unmount
     return () => {
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
@@ -202,25 +149,13 @@ export function usePendingApprovals(orgId: string) {
   }, [orgId, fetchApprovals]);
 
   const approveConfirmation = async (id: string, approverId: string) => {
-    const res = await fetch(`${API_BASE}/api/approvals/${id}/approve`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ approverId }),
-    });
-
-    if (!res.ok) throw new Error('Failed to approve');
-    await fetchApprovals(); // Refetch without spinner
+    await api.post(`/api/approvals/${id}/approve`, { approverId });
+    await fetchApprovals();
   };
 
   const rejectConfirmation = async (id: string, reason: string) => {
-    const res = await fetch(`${API_BASE}/api/approvals/${id}/reject`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ reason }),
-    });
-
-    if (!res.ok) throw new Error('Failed to reject');
-    await fetchApprovals(); // Refetch without spinner
+    await api.post(`/api/approvals/${id}/reject`, { reason });
+    await fetchApprovals();
   };
 
   return {

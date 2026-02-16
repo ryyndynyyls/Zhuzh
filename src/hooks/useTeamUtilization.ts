@@ -1,5 +1,11 @@
+/**
+ * useTeamUtilization Hook
+ *
+ * MIGRATED: Now fetches from API server instead of direct Supabase.
+ */
+
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/apiClient';
 
 interface UserUtilization {
   user_id: string | null;
@@ -22,13 +28,10 @@ export function useTeamUtilization(weekStart: string) {
     setError(null);
 
     try {
-      const { data, error: fetchError } = await supabase
-        .from('user_weekly_utilization')
-        .select('*')
-        .eq('week_start', weekStart);
-
-      if (fetchError) throw fetchError;
-      setUtilization(data || []);
+      const data = await api.get<{ utilization: UserUtilization[] }>(
+        `/api/utilization?weekStart=${encodeURIComponent(weekStart)}`
+      );
+      setUtilization(data.utilization || []);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to fetch team utilization'));
     } finally {

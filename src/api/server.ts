@@ -39,6 +39,10 @@ import {
   voiceRouter,
   teamRouter,
   timerRouter,
+  allocationsRouter,
+  utilizationRouter,
+  resourcesRouter,
+  confirmationsRouter,
 } from './routes';
 import reportsRouter from './reports';
 import calendarSyncRouter from './calendar';
@@ -148,6 +152,18 @@ app.use('/api/team', teamRouter);
 
 // Live Time Tracking
 app.use('/api/timer', timerRouter);
+
+// Allocations CRUD
+app.use('/api/allocations', allocationsRouter);
+
+// Utilization
+app.use('/api/utilization', utilizationRouter);
+
+// Resources (calendar data)
+app.use('/api/resources', resourcesRouter);
+
+// Time Confirmations
+app.use('/api/confirmations', confirmationsRouter);
 
 // ============================================================
 // ADMIN HELPERS (temp)

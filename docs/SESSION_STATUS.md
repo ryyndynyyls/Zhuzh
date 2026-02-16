@@ -14,6 +14,16 @@
 
 ---
 
+## 🎯 Current Priority: API Migration
+
+**Problem:** 7 frontend hooks query Supabase directly with RLS, causing severe latency (especially on cold starts). The API server uses the service role key and is fast.
+
+**Solution:** Migrate all hooks to go through the Express API server. See `docs/COWORK_API_MIGRATION.md`.
+
+**Status:** Cowork task created, ready to execute.
+
+---
+
 ## 🎯 Task Sizing — Who Does What
 
 **Before starting any task, assess scope and assign to the right tool:**

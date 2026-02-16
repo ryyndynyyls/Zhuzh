@@ -11,6 +11,36 @@ import { supabase } from '../lib/supabase';
 const router = Router();
 
 // ============================================================
+// LIST PROJECTS
+// ============================================================
+
+/**
+ * List projects with optional filters
+ * GET /api/projects?status=active&clientId=xxx&isActive=true
+ */
+router.get('/', async (req, res) => {
+  const { status, clientId, isActive } = req.query;
+
+  try {
+    let query = supabase
+      .from('projects')
+      .select('*, client:clients(id, name), phases:project_phases(*)');
+
+    if (status) query = query.eq('status', status as 'active' | 'complete' | 'planning' | 'on-hold');
+    if (clientId) query = query.eq('client_id', clientId as string);
+    if (isActive !== undefined) query = query.eq('is_active', isActive === 'true');
+
+    const { data, error } = await query.order('priority', { ascending: true });
+    if (error) throw error;
+
+    res.json({ projects: data || [] });
+  } catch (err: any) {
+    console.error('Failed to list projects:', err);
+    res.status(500).json({ error: 'Failed to list projects' });
+  }
+});
+
+// ============================================================
 // SPECIFIC ROUTES (must be defined before /:id routes)
 // ============================================================
 

@@ -1,5 +1,11 @@
+/**
+ * useProjects Hook
+ *
+ * MIGRATED: Now fetches from API server instead of direct Supabase.
+ */
+
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/apiClient';
 import type { ProjectRow, ClientRow, ProjectPhaseRow } from '../types/database';
 
 export interface ProjectWithRelations extends ProjectRow {
@@ -27,18 +33,16 @@ export function useProjects(options: UseProjectsOptions = {}) {
     setError(null);
 
     try {
-      let query = supabase
-        .from('projects')
-        .select('*, client:clients(*), phases:project_phases(*)');
+      const params = new URLSearchParams();
+      if (options.status) params.set('status', options.status);
+      if (options.clientId) params.set('clientId', options.clientId);
+      if (options.isActive !== undefined) params.set('isActive', String(options.isActive));
 
-      if (options.status) query = query.eq('status', options.status as 'active' | 'complete' | 'planning' | 'on-hold');
-      if (options.clientId) query = query.eq('client_id', options.clientId);
-      if (options.isActive !== undefined) query = query.eq('is_active', options.isActive);
-
-      const { data, error: fetchError } = await query.order('priority', { ascending: true });
-
-      if (fetchError) throw fetchError;
-      setProjects((data || []) as ProjectWithRelations[]);
+      const qs = params.toString();
+      const data = await api.get<{ projects: ProjectWithRelations[] }>(
+        `/api/projects${qs ? `?${qs}` : ''}`
+      );
+      setProjects(data.projects || []);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to fetch projects'));
     } finally {
@@ -68,14 +72,10 @@ export function useProject(projectId: string | undefined) {
     async function fetchProject() {
       setLoading(true);
       try {
-        const { data, error: fetchError } = await supabase
-          .from('projects')
-          .select('*, client:clients(*), phases:project_phases(*)')
-          .eq('id', projectId as string)
-          .single();
-
-        if (fetchError) throw fetchError;
-        setProject(data as ProjectWithRelations);
+        const data = await api.get<{ project: ProjectWithRelations }>(
+          `/api/projects/${projectId}`
+        );
+        setProject(data.project);
       } catch (err) {
         setError(err instanceof Error ? err : new Error('Failed to fetch project'));
       } finally {

@@ -1,13 +1,13 @@
-import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../lib/supabase';
-
 /**
- * Allocation type that includes relationships and supports both new (start_date/end_date)
- * and legacy (week_start) fields.
+ * useAllocations Hook
  *
- * Note: This type is manually defined to support the transition to day-level allocations.
- * After running the database migration, regenerate Supabase types to get auto-generated types.
+ * MIGRATED: Now uses API server instead of direct Supabase.
+ * Supports both legacy (week_start) and new (start_date/end_date) allocation models.
  */
+
+import { useState, useEffect, useCallback } from 'react';
+import { api } from '../lib/apiClient';
+
 interface AllocationWithRelations {
   id: string;
   user_id: string;
@@ -28,14 +28,11 @@ interface AllocationWithRelations {
 
 /**
  * Options for filtering allocations
- * Updated 2026-01-29: Now supports date range queries instead of just weekStart
  */
 interface UseAllocationsOptions {
-  /** @deprecated Use startDate/endDate instead. Single date to fetch allocations for. */
+  /** @deprecated Use startDate/endDate instead */
   weekStart?: string;
-  /** Start of date range to fetch allocations that overlap with */
   startDate?: string;
-  /** End of date range to fetch allocations that overlap with */
   endDate?: string;
   userId?: string;
   projectId?: string;
@@ -82,22 +79,17 @@ export function useAllocations(options: UseAllocationsOptions) {
     setError(null);
 
     try {
-      // Query allocations that overlap with the date range
-      // An allocation overlaps if: allocation.start_date <= resolvedEndDate AND allocation.end_date >= resolvedStartDate
-      let query = supabase
-        .from('allocations')
-        .select('*, project:projects(id, name, color), phase:project_phases(id, name)')
-        .lte('start_date', resolvedEndDate)
-        .gte('end_date', resolvedStartDate);
+      const params = new URLSearchParams({
+        startDate: resolvedStartDate,
+        endDate: resolvedEndDate,
+      });
+      if (options.userId) params.set('userId', options.userId);
+      if (options.projectId) params.set('projectId', options.projectId);
 
-      if (options.userId) query = query.eq('user_id', options.userId);
-      if (options.projectId) query = query.eq('project_id', options.projectId);
-
-      const { data, error: fetchError } = await query;
-
-      if (fetchError) throw fetchError;
-      // Cast data to our type - this handles the transition period before DB migration
-      setAllocations((data || []) as AllocationWithRelations[]);
+      const data = await api.get<{ allocations: AllocationWithRelations[] }>(
+        `/api/allocations?${params.toString()}`
+      );
+      setAllocations(data.allocations || []);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to fetch allocations'));
     } finally {
@@ -111,7 +103,6 @@ export function useAllocations(options: UseAllocationsOptions) {
 
   /**
    * Create a new allocation
-   * Updated to use start_date/end_date columns
    */
   const createAllocation = async (allocation: {
     user_id: string;
@@ -124,21 +115,9 @@ export function useAllocations(options: UseAllocationsOptions) {
     notes?: string | null;
     created_by?: string | null;
   }) => {
-    // Calculate week_start for backwards compatibility
-    const weekStart = getWeekMonday(allocation.start_date);
-
-    const { data, error } = await supabase
-      .from('allocations')
-      .insert({
-        ...allocation,
-        week_start: weekStart,
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
+    const data = await api.post<{ allocation: any }>('/api/allocations', allocation);
     await fetchAllocations();
-    return data;
+    return data.allocation;
   };
 
   /**
@@ -154,7 +133,6 @@ export function useAllocations(options: UseAllocationsOptions) {
     notes?: string | null;
     created_by?: string | null;
   }) => {
-    // Convert week_start to start_date (Monday) and end_date (Friday)
     const startDate = allocation.week_start;
     const endDate = getWeekFriday(allocation.week_start);
 
@@ -180,29 +158,12 @@ export function useAllocations(options: UseAllocationsOptions) {
     is_billable: boolean;
     notes: string | null;
   }>) => {
-    const updateData: any = { ...updates };
-
-    // If start_date is being updated, also update week_start for backwards compatibility
-    if (updates.start_date) {
-      updateData.week_start = getWeekMonday(updates.start_date);
-    }
-
-    const { error } = await supabase
-      .from('allocations')
-      .update(updateData)
-      .eq('id', id);
-
-    if (error) throw error;
+    await api.put(`/api/allocations/${id}`, updates);
     await fetchAllocations();
   };
 
   const deleteAllocation = async (id: string) => {
-    const { error } = await supabase
-      .from('allocations')
-      .delete()
-      .eq('id', id);
-
-    if (error) throw error;
+    await api.delete(`/api/allocations/${id}`);
     await fetchAllocations();
   };
 
