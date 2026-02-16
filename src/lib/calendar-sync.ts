@@ -831,12 +831,62 @@ async function getOrgCalendarConfig(orgId: string): Promise<OrgCalendarConfig> {
     .eq('org_id', orgId)
     .single();
 
-  if (data?.pto_detection && data?.recurring_schedules) {
+  if (!data?.pto_detection) {
+    return DEFAULT_CONFIG;
+  }
+
+  // Normalize Gemini-generated config to match expected format
+  const rawPto = data.pto_detection as any;
+  const rawSchedules = (data.recurring_schedules || []) as any[];
+
+  // If already in the right format, use it
+  if (rawPto.title_patterns && Array.isArray(rawPto.title_patterns)) {
     return {
-      pto_detection: data.pto_detection as OrgCalendarConfig['pto_detection'],
-      recurring_schedules: data.recurring_schedules as OrgCalendarConfig['recurring_schedules']
+      pto_detection: rawPto as OrgCalendarConfig['pto_detection'],
+      recurring_schedules: rawSchedules as OrgCalendarConfig['recurring_schedules']
     };
   }
 
-  return DEFAULT_CONFIG;
+  // Convert Gemini "rules" format → expected format
+  const titlePatterns: string[] = [];
+  const calendarNames: string[] = [];
+  let allDayEvents = true;
+
+  if (rawPto.rules && Array.isArray(rawPto.rules)) {
+    for (const rule of rawPto.rules) {
+      if (rule.type === 'event_title_pattern' && rule.pattern) {
+        // Extract readable keywords from regex patterns
+        // e.g., "(?i)(\\w+)\\s+OOO" → "OOO"
+        const keywords = rule.pattern
+          .replace(/\(\?i\)/g, '')
+          .replace(/\\[wsdb+*]/g, '')
+          .replace(/[()\[\]{}^$.|?+*\\]/g, '')
+          .trim();
+        if (keywords) titlePatterns.push(keywords);
+      }
+      if (rule.type === 'calendar_source' && rule.calendar_name) {
+        calendarNames.push(rule.calendar_name);
+      }
+      if (rule.type === 'all_day_event') {
+        allDayEvents = true;
+      }
+    }
+  }
+
+  // Fall back to defaults if extraction yielded nothing useful
+  if (titlePatterns.length === 0) {
+    titlePatterns.push(...DEFAULT_CONFIG.pto_detection.title_patterns);
+  }
+  if (calendarNames.length === 0) {
+    calendarNames.push(...DEFAULT_CONFIG.pto_detection.calendar_names);
+  }
+
+  return {
+    pto_detection: {
+      title_patterns: titlePatterns,
+      calendar_names: calendarNames,
+      all_day_events: allDayEvents,
+    },
+    recurring_schedules: rawSchedules,
+  };
 }
