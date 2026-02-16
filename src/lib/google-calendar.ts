@@ -53,6 +53,9 @@ function getOAuth2Client() {
 export function getAuthUrl(userEmail: string, state: string): string {
   const oauth2Client = getOAuth2Client();
   
+  // Extract domain from email for hosted domain hint
+  const domain = userEmail.split('@')[1];
+  
   return oauth2Client.generateAuthUrl({
     access_type: 'offline', // Get refresh token
     prompt: 'consent', // Force consent to ensure refresh token
@@ -61,6 +64,7 @@ export function getAuthUrl(userEmail: string, state: string): string {
       'https://www.googleapis.com/auth/calendar.events.readonly',
     ],
     login_hint: userEmail, // Pre-select their Google account
+    hd: domain, // Restrict to their workspace domain (e.g. useallfive.com)
     state, // For CSRF protection and user identification
   });
 }

@@ -100,12 +100,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('🚀 Initializing auth...');
       setLoading(true);
 
-      // Timeout after 10 seconds so users don't stare at a spinner forever
+      // Timeout after 30 seconds so users don't stare at a spinner forever
       const timeout = setTimeout(() => {
-        console.warn('⏰ Auth init timed out after 10s');
+        console.warn('⏰ Auth init timed out after 30s');
         setError(new Error('Connection timed out. Please refresh the page and try again.'));
         setLoading(false);
-      }, 10000);
+      }, 30000);
 
       try {
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
