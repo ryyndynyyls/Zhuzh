@@ -191,6 +191,32 @@ app.get('/api/health', (req, res) => res.json(healthResponse()));
 // START SERVER
 // ============================================================
 
+// ============================================================
+// SUPABASE KEEP-ALIVE (prevents free tier from pausing)
+// ============================================================
+
+const KEEP_ALIVE_INTERVAL = 4 * 60 * 60 * 1000; // Every 4 hours
+
+function startKeepAlive() {
+  setInterval(async () => {
+    try {
+      const { count, error } = await supabase
+        .from('users')
+        .select('id', { count: 'exact', head: true });
+      
+      if (error) {
+        console.warn('⚠️ Supabase keep-alive ping failed:', error.message);
+      } else {
+        console.log(`📡 Supabase keep-alive OK (${count} users)`);
+      }
+    } catch (err) {
+      console.warn('⚠️ Supabase keep-alive error:', err);
+    }
+  }, KEEP_ALIVE_INTERVAL);
+
+  console.log(`📡 Supabase keep-alive started (every ${KEEP_ALIVE_INTERVAL / 3600000}h)`);
+}
+
 const PORT = Number(process.env.PORT) || Number(process.env.API_PORT) || 3002;
 console.log(`Attempting to listen on port ${PORT}...`);
 
@@ -198,6 +224,7 @@ const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`🗓️  Zhuzh API server running on http://0.0.0.0:${PORT}`);
   console.log(`   Health check: http://0.0.0.0:${PORT}/health`);
   console.log(`   Server is now accepting connections`);
+  startKeepAlive();
 });
 
 server.on('error', (err) => {

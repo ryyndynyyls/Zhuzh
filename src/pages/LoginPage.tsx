@@ -4,7 +4,7 @@ import { Navigate } from 'react-router-dom';
 import { brand, colors } from '../styles/tokens';
 
 export function LoginPage() {
-  const { user, loading, signInWithSlack } = useAuth();
+  const { user, loading, error, signInWithSlack } = useAuth();
 
   if (loading) {
     return (
@@ -23,6 +23,54 @@ export function LoginPage() {
           sx={{ color: brand.orange }} 
           aria-label="Loading"
         />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box
+        sx={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          bgcolor: colors.dark.bg.primary,
+          p: 2,
+        }}
+      >
+        <Container maxWidth="sm">
+          <Card
+            sx={{
+              bgcolor: colors.dark.bg.secondary,
+              border: `1px solid ${colors.dark.border.subtle}`,
+              borderRadius: 3,
+            }}
+          >
+            <CardContent sx={{ textAlign: 'center', p: { xs: 3, sm: 5 } }}>
+              <Typography variant="h5" sx={{ color: colors.dark.text.primary, mb: 2 }}>
+                Connection Issue
+              </Typography>
+              <Typography variant="body1" sx={{ color: colors.dark.text.secondary, mb: 3 }}>
+                {error.message}
+              </Typography>
+              <Button
+                variant="contained"
+                onClick={() => window.location.reload()}
+                sx={{
+                  bgcolor: brand.orange,
+                  color: brand.dark,
+                  fontWeight: 600,
+                  '&:hover': { bgcolor: '#E67A2C' },
+                  textTransform: 'none',
+                  borderRadius: 2,
+                }}
+              >
+                Refresh Page
+              </Button>
+            </CardContent>
+          </Card>
+        </Container>
       </Box>
     );
   }

@@ -176,6 +176,33 @@ Cowork is Claude Desktop's **Tasks mode** — an agentic system that:
 
 ---
 
+## 🎯 Task Sizing — Who Does What
+
+**Before starting any task, assess scope and assign to the right tool:**
+
+| Task Type | Owner | Examples |
+|-----------|-------|----------|
+| Quick questions, architecture decisions | **Claude (chat)** | "Should we use X or Y?" |
+| Code review, debugging strategy | **Claude (chat)** | "Why is this failing?" |
+| Small edits (<50 lines, 1 file) | **Claude (chat)** | Fix a bug, add a field |
+| Writing Cowork task specs | **Claude (chat)** | Define subtasks, success criteria |
+| Large refactors (>100 lines) | **Cowork** | Restructure a component |
+| Multi-file changes | **Cowork** | Feature touching 3+ files |
+| Tasks >15 min estimated | **Cowork** | Complex debugging, migrations |
+| Simple typos, copy/paste | **Ryan (VSCode)** | Rename a variable |
+| Running/testing commands | **Ryan (terminal)** | `npm run dev`, curl tests |
+| Browser testing | **Ryan** | Click through UI, verify visuals |
+
+**Red flags → Cowork task:**
+- File is >500 lines
+- Edit touches multiple interconnected files
+- Requires investigation + implementation
+- Claude has attempted once and hit timeout/issues
+
+**When uncertain:** Ask "Should this be a Cowork task?" before diving in.
+
+---
+
 ## Tech Stack
 
 | Layer | Technology | Notes |

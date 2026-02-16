@@ -100,9 +100,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('🚀 Initializing auth...');
       setLoading(true);
 
+      // Timeout after 10 seconds so users don't stare at a spinner forever
+      const timeout = setTimeout(() => {
+        console.warn('⏰ Auth init timed out after 10s');
+        setError(new Error('Connection timed out. Please refresh the page and try again.'));
+        setLoading(false);
+      }, 10000);
+
       try {
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
+        clearTimeout(timeout);
         console.log('📦 Session:', session ? 'exists' : 'none');
         
         if (sessionError) {
@@ -118,6 +126,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.log('⚠️ No session or no email in session');
         }
       } catch (err) {
+        clearTimeout(timeout);
         // Ignore abort errors from React strict mode
         if (err instanceof Error && err.name === 'AbortError') {
           console.log('⏭️ Auth init aborted (React strict mode)');
