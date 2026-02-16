@@ -39,8 +39,11 @@ export interface OrgCalendarConfig {
   recurring_schedules: Array<{
     name: string;
     type: string;
-    day_of_week: number;
-    detection: {
+    day_of_week?: number;
+    day?: string;
+    pattern?: string;
+    detection_method?: string;
+    detection?: {
       method: string;
       event_title_contains: string;
     };
@@ -643,11 +646,25 @@ export function classifyEvent(event: CalendarEvent, config: OrgCalendarConfig): 
 
   // 1. Friday Off (most specific)
   for (const schedule of config.recurring_schedules) {
-    if (
-      schedule.type === 'alternating_day_off' &&
-      title.includes(schedule.detection.event_title_contains.toLowerCase())
-    ) {
-      return 'friday_off';
+    if (schedule.type === 'alternating_day_off') {
+      // Handle both config formats:
+      // Default: { detection: { event_title_contains: 'Fridays off' } }
+      // Gemini-generated: { pattern: '(?i)friday(s)?\\s+off', name: 'Alternating Fridays' }
+      const searchTerm = schedule.detection?.event_title_contains?.toLowerCase()
+        || schedule.name?.toLowerCase();
+      
+      if (searchTerm && title.includes('friday') && title.includes('off')) {
+        return 'friday_off';
+      }
+      // Also try the pattern field if present
+      if ((schedule as any).pattern) {
+        try {
+          const pattern = (schedule as any).pattern.replace('(?i)', '');
+          if (new RegExp(pattern, 'i').test(event.summary)) {
+            return 'friday_off';
+          }
+        } catch {}
+      }
     }
   }
 

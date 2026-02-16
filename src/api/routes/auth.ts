@@ -70,8 +70,35 @@ router.get('/google/callback', async (req, res) => {
       return res.redirect(`${getAppUrl()}/settings?error=state_expired`);
     }
 
+    // Get the user's expected email from our database
+    const { data: dbUser, error: userError } = await supabase
+      .from('users')
+      .select('email')
+      .eq('id', userId)
+      .single();
+
+    if (userError || !dbUser) {
+      return res.redirect(`${getAppUrl()}/settings?error=user_not_found`);
+    }
+
     // Exchange code for tokens
     const tokens = await googleCalendar.exchangeCodeForTokens(code as string);
+
+    // Verify the Google account matches the user's registered email
+    const { google } = await import('googleapis');
+    const oauth2 = google.oauth2({ version: 'v2', auth: undefined });
+    const oauth2Client = new google.auth.OAuth2();
+    oauth2Client.setCredentials({ access_token: tokens.access_token });
+    const userInfo = await google.oauth2({ version: 'v2', auth: oauth2Client }).userinfo.get();
+    const googleEmail = userInfo.data.email?.toLowerCase();
+    const expectedEmail = dbUser.email.toLowerCase();
+
+    if (googleEmail !== expectedEmail) {
+      console.warn(`❌ Google account mismatch: got ${googleEmail}, expected ${expectedEmail}`);
+      return res.redirect(
+        `${getAppUrl()}/settings?error=email_mismatch&expected=${encodeURIComponent(expectedEmail)}`
+      );
+    }
 
     // Get list of calendars
     const calendars = await googleCalendar.listCalendars(tokens);

@@ -134,7 +134,19 @@ export default function SettingsPage() {
       // Clean URL
       window.history.replaceState({}, '', '/settings');
     } else if (params.get('error')) {
-      setMessage({ type: 'error', text: `Connection failed: ${params.get('error')}` });
+      const errorCode = params.get('error');
+      const expected = params.get('expected');
+      let errorText = `Connection failed: ${errorCode}`;
+      
+      if (errorCode === 'email_mismatch' && expected) {
+        errorText = `Wrong Google account. Please connect with ${expected} — that's the email linked to your Zhuzh account.`;
+      } else if (errorCode === 'google_oauth_denied') {
+        errorText = 'Google Calendar access was denied. Please try again and allow access.';
+      } else if (errorCode === 'state_expired') {
+        errorText = 'The connection request expired. Please try again.';
+      }
+      
+      setMessage({ type: 'error', text: errorText });
       window.history.replaceState({}, '', '/settings');
     }
   }, []);
