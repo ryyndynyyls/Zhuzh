@@ -1121,6 +1121,7 @@ function AllocationDialog({
               isOptionEqualToValue={(option, value) => option.id === value.id}
               loading={phasesLoading}
               disabled={isEditingSingleDayFromGroup}
+              ListboxProps={{ style: { maxHeight: 200 } }}
               renderInput={(params) => (
                 <TextField
                   {...params}
