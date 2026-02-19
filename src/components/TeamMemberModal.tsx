@@ -36,6 +36,7 @@ import {
 } from '@mui/icons-material';
 import { User, UserUpdate } from '../types/database';
 import { supabase } from '../lib/supabase';
+import { api } from '../lib/apiClient';
 import { ZhuzhCardLoader } from './ZhuzhPageLoader';
 import { getDisciplineColor } from '../utils/disciplineColors';
 import { glowBorderStyles } from './design-system';
@@ -151,13 +152,9 @@ export function TeamMemberModal({
       setProjectsExpanded(false);
 
       try {
-        const { data: userData, error: userError } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', userId)
-          .single();
-
-        if (userError) throw userError;
+        // Fetch user via API (bypasses RLS)
+        const userResponse = await api.get<{ data: User }>(`/api/team/${userId}`);
+        const userData = userResponse.data;
         setUser(userData);
 
         setEditForm({
@@ -170,31 +167,28 @@ export function TeamMemberModal({
           nicknames: userData.nicknames || '',
         });
 
-        // Fetch current week allocations
-        const weekStart = getCurrentWeekStart();
-        const { data: allocData, error: allocError } = await supabase
-          .from('allocations')
-          .select(`
-            planned_hours,
-            project:projects(name, color)
-          `)
-          .eq('user_id', userId)
-          .eq('week_start', weekStart);
+        // Fetch current week allocations via API
+        try {
+          const allocResponse = await api.get<{ allocations: any[] }>(`/api/team/${userId}/allocations`);
+          const allocData = allocResponse.allocations || [];
 
-        if (allocError) throw allocError;
+          const projectMap = new Map<string, AllocationSummary>();
+          allocData.forEach((alloc: any) => {
+            const name = alloc.project?.name || alloc.projectName || 'Unknown';
+            const color = alloc.project?.color || alloc.projectColor || '#6B7280';
+            const hours = alloc.planned_hours || alloc.plannedHours || 0;
+            if (projectMap.has(name)) {
+              projectMap.get(name)!.hours += hours;
+            } else {
+              projectMap.set(name, { projectName: name, projectColor: color, hours });
+            }
+          });
 
-        const projectMap = new Map<string, AllocationSummary>();
-        allocData?.forEach((alloc: any) => {
-          const name = alloc.project?.name || 'Unknown';
-          const color = alloc.project?.color || '#6B7280';
-          if (projectMap.has(name)) {
-            projectMap.get(name)!.hours += alloc.planned_hours;
-          } else {
-            projectMap.set(name, { projectName: name, projectColor: color, hours: alloc.planned_hours });
-          }
-        });
-
-        setAllocations(Array.from(projectMap.values()));
+          setAllocations(Array.from(projectMap.values()));
+        } catch (allocErr) {
+          console.warn('Failed to fetch allocations:', allocErr);
+          setAllocations([]);
+        }
       } catch (err) {
         console.error('Failed to fetch team member:', err);
         setError(err instanceof Error ? err.message : 'Failed to load profile');
@@ -392,14 +386,19 @@ export function TeamMemberModal({
         }
       }
 
-      const { error: updateError } = await supabase
-        .from('users')
-        .update(updates)
-        .eq('id', userId);
+      // Update via API (bypasses RLS)
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3002';
+      const updateResponse = await fetch(`${apiUrl}/api/team/${userId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      });
+      if (!updateResponse.ok) {
+        const err = await updateResponse.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to update');
+      }
 
-      if (updateError) throw updateError;
-
-      setUser({ ...user, ...updates });
+      setUser({ ...user, ...updates } as User);
       setEditing(false);
       onUpdate?.();
     } catch (err) {
