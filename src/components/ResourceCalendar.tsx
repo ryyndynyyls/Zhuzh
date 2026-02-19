@@ -2,6 +2,7 @@
  * Resource Calendar Component
  * Visual grid showing team allocations by week
  *
+ * Updated 2026-02-19: Added cascading phase selector in allocation dialog
  * Updated 2026-01-29: Now supports day-level allocations with start_date/end_date
  * - Allocations can span multiple days
  * - Drag-to-extend updates end_date instead of creating new allocations

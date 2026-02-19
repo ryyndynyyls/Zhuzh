@@ -1,6 +1,6 @@
 # ResourceFlow (Zhuzh) Session Status
-**Updated:** 2026-01-30 (Ready for E2E Testing)
-**Current Focus:** Comprehensive E2E Test → Marketing page (Feb 2nd)
+**Updated:** 2026-02-16
+**Current Focus:** ProStrat mini-pilot prep → Internal pilot launch
 
 ---
 
@@ -14,19 +14,58 @@
 
 ---
 
-## 🎯 Current Priority: API Migration
+## 🎯 Current Priority: ProStrat Mini-Pilot
 
-**Problem:** 7 frontend hooks query Supabase directly with RLS, causing severe latency (especially on cold starts). The API server uses the service role key and is fast.
+**Goal:** Get Michelle, Maleno, Kara, and Levi using Zhuzh for 1-2 weeks with real projects while Ryan makes improvements.
 
-**Solution:** Migrate all hooks to go through the Express API server. See `docs/COWORK_API_MIGRATION.md`.
+**Status:**
+- ✅ App is live and working
+- ✅ Calendar sync working (18 events synced, PTO/Fridays off showing correctly)
+- ✅ All four pilot users have entries in the database (auto-match on Slack OAuth login)
+- ⬜ Send invite message to Michelle, Maleno, Kara, Levi
+- ⬜ Populate hours for 2 real ProStrat projects
+- ⬜ Reschedule team walkthrough meeting
 
-**Status:** Cowork task created, ready to execute.
+---
+
+## ✅ Completed Today (2026-02-16)
+
+### Major: API Migration (COMPLETE ✅)
+**7 frontend hooks migrated from direct Supabase → Express API server**
+
+This was the #1 performance fix. All data queries now go through the API server using the service role key, bypassing slow RLS policies entirely.
+
+**Hooks migrated:**
+- `useCurrentUser` → delegates to AuthContext (55→17 lines)
+- `useTeamUtilization` → `/api/utilization`
+- `useThisWeekUtilization` → `/api/utilization/week` (138→69 lines)
+- `useProjects` → `/api/projects`
+- `useAllocations` → full CRUD via `/api/allocations`
+- `useConfirmations` → REST via API, realtime WebSocket kept direct
+- `useResourceCalendar` → `/api/resources/calendar-data` + `/api/allocations` (1239→783 lines)
+
+**New files created:**
+- `src/lib/apiClient.ts` — thin fetch wrapper
+- `src/api/routes/utilization.ts`, `allocations.ts`, `resources.ts`, `confirmations.ts`
+
+**Environment:** `VITE_API_URL` set in Railway web app service → `https://zhuzh-api-production.up.railway.app`
+
+### Auth Resilience (COMPLETE ✅)
+- **Profile caching in localStorage** — instant app load from cache, session verified in background
+- **30-second auth timeout** with friendly "Connection Issue" error page + Refresh button
+- **Supabase keep-alive ping** — API server pings Supabase every 4 hours to prevent free tier pausing
+
+### Google Calendar Fixes (COMPLETE ✅)
+- **Domain hint (`hd`)** added to OAuth URL — restricts account picker to workspace domain
+- **Server-side email verification** — rejects tokens from wrong Google account with friendly error message
+- **Calendar sync config normalization** — Gemini-generated config format now properly converted to match sync code expectations
+- **Google OAuth env vars** added to Railway API service: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`
+- **Production redirect URI** registered in Google Cloud Console
+- **Successful sync:** 18 events (PTO, holidays, Fridays off) synced for org
 
 ---
 
 ## 🎯 Task Sizing — Who Does What
-
-**Before starting any task, assess scope and assign to the right tool:**
 
 | Task Type | Owner | Examples |
 |-----------|-------|----------|
@@ -41,147 +80,51 @@
 | Running/testing commands | **Ryan (terminal)** | `npm run dev`, curl tests |
 | Browser testing | **Ryan** | Click through UI, verify visuals |
 
-**Red flags that mean "make this a Cowork task":**
-- File is >500 lines
-- Edit touches multiple interconnected files
-- Requires investigation + implementation
-- Claude has attempted once and hit timeout/issues
-
-**When uncertain:** Ask "Should this be a Cowork task?" before diving in.
-
----
-
-## 🧪 NEXT SESSION: Comprehensive E2E Test Plan
-
-### Pre-Test: Deploy Latest Changes
-- [ ] Push Cowork changes to GitHub
-- [ ] Railway auto-deploys (verify)
-- [ ] Check production app loads
-
-### Test 1: Resource Calendar — Visual Indicators
-- [ ] Hunter's Thursday (3h available) — NO stripes
-- [ ] Hunter's Friday (0h) — HAS stripes
-- [ ] Weekends — HAS stripes for everyone
-- [ ] Cindy's OOO days — HAS stripes (from Google Calendar)
-- [ ] Jacob's OOO days — HAS stripes (from Google Calendar)
-- [ ] "Fridays off 1/30" attendees — Friday HAS stripes
-
-### Test 2: Allocation Creation
-- [ ] Click empty cell → Create allocation dialog opens
-- [ ] Select project from dropdown (search works)
-- [ ] Set hours (e.g., 4h)
-- [ ] Save → Allocation tile appears
-- [ ] Total hours in cell updates correctly (no floating point jank)
-
-### Test 3: Allocation Group Editing
-- [ ] Click existing allocation bar → "Edit Allocation Group" dialog opens
-- [ ] Shows correct date range (e.g., "Jan 26-30 (5 days @ 4h/day)")
-- [ ] Total shows clean number (not "22.349999999999998h")
-- [ ] "Edit All Days" → Change hours → Apply → All days update
-- [ ] "Delete Group" → Confirm → All days deleted
-
-### Test 4: Individual Day Editing (NEW)
-- [ ] Click allocation bar → Dialog opens
-- [ ] Click specific day chip (e.g., "Fri 4h") → Switches to single-day edit
-- [ ] "Back to Group" button visible
-- [ ] Change hours for just that day → Save → Only that day changes
-- [ ] Set to 0h → Deletes just that day, others remain
-- [ ] Verify Mon-Thu still exist after deleting Friday
-
-### Test 5: Over-Allocation Warnings
-- [ ] Allocate hours exceeding user's daily capacity
-- [ ] Warning indicator appears (orange triangle?)
-- [ ] Hunter at 174% utilization shows warning
-
-### Test 6: Repeat Last Week
-- [ ] Navigate to empty week
-- [ ] Click "Repeat Last Week" button
-- [ ] Previous week's allocations copied to current week
-- [ ] Verify hours are correct
-
-### Test 7: Friday Slack DM Flow (if time)
-- [ ] Trigger Friday DM (or test user)
-- [ ] Employee receives DM with allocations
-- [ ] Confirm/adjust hours
-- [ ] Submission appears in approval queue
-
-### Test 8: Manager Approval Flow
-- [ ] Go to Approvals page
-- [ ] See pending confirmations
-- [ ] Click employee name → Profile modal opens
-- [ ] Approve/reject confirmation
-- [ ] Status updates in realtime
-
-### Post-Test
-- [ ] Note any bugs found
-- [ ] Update SESSION_STATUS.md with results
-- [ ] Prioritize fixes vs. proceed to marketing page
-
----
-
-## ✅ Completed Today (2026-01-30)
-
-### Calendar & Allocation Fixes (COMPLETE ✅)
-
-**Task file:** `docs/COWORK_CALENDAR_ALLOCATION_FIXES.md`
-
-**What was done:**
-
-1. **Stripe Logic Fixed** — Stripes now only appear on 0h days
-   - Hunter's Thursday (3h) no longer has stripes
-   - Hunter's Friday (0h) and weekends still have stripes
-   - Removed "reduced hours" lighter stripes feature
-
-2. **Google Calendar Events Synced to Resource Calendar**
-   - Added query for `user_calendar_events` table (OOO, PTO, friday_off events)
-   - Calendar events merged with `pto_entries` data
-   - All-day events = 8h, partial events calculate hours from duration
-   - Duplicate prevention (same user+date)
-
-3. **Individual Day Editing Fixed**
-   - Day chips now clickable and switch to single-day edit mode
-   - Added `handleSaveSingleDay` function for single allocation updates
-   - "Back to Group" button to return to group edit view
-   - Delete button works for single day from group
-   - Project dropdown disabled when editing existing day
-
-4. **Floating Point Display Fixed**
-   - All hour displays now rounded: `Math.round(x * 100) / 100`
-   - Fixed: totalHours, hoursPerDay, cell totals, day chips, tooltips
-   - No more "22.349999999999998h" artifacts
-
-**Files modified:**
-- `src/components/ResourceCalendar.tsx` — Stripe logic, day editing, number formatting
-- `src/hooks/useResourceCalendar.ts` — Calendar events fetching and merging
-
-### Day-Level Migration (COMPLETE ✅)
-- Ran migration 006 in production
-- 31,656 single-day allocation records
-- 109,260 total hours preserved
-
-### Unavailability Visual Indicators (COMPLETE ✅)
-- Diagonal stripes on 0h days
-- Stripes in week/day view only
-
-### Resource Config Parsing (COMPLETE ✅)
-- Gemini 2.0-flash, 24 users parsed
-- Hunter: 33h/wk with custom schedule
-
 ---
 
 ## 🐛 Known Issues
 
 | Issue | Severity | Notes |
 |-------|----------|-------|
+| Calendar config schema validation | 🟡 MED | Gemini generates different schema than sync code expects. Normalized at load time for UA5, but need validation/standardization for onboarding new orgs |
+| Supabase free tier cold starts | 🟡 MED | Keep-alive ping mitigates but doesn't eliminate. Consider Pro ($25/mo) before pilot expands |
 | Visual bar spanning | 🟢 LOW | Deferred - grouping/editing works, CSS spanning cosmetic |
 
 ---
 
 ## 📋 Next Priorities
 
-1. **E2E Test** — Verify all fixes work in production
-2. **Marketing page for Michelle's MD group** (Feb 2nd deadline) ⏰
-3. Clean up any debug logging before pilot
+1. **Send pilot invites** to Michelle, Maleno, Kara, Levi (Slack message ready)
+2. **Reschedule team walkthrough** — demo the app, populate hours for 2 ProStrat projects
+3. **E2E testing** — verify all pages work smoothly post-migration (test plan in previous session notes)
+4. **Marketing page** — on hold, revisit after pilot feedback
+5. **Clean up debug logging** before wider rollout
+
+---
+
+## 🧪 E2E Test Plan (Still Pending)
+
+### Test 1: Resource Calendar — Visual Indicators
+- [ ] PTO days show stripes (from Google Calendar sync)
+- [ ] Fridays off show stripes for attendees
+- [ ] Weekends show stripes
+- [ ] Normal working days — NO stripes
+
+### Test 2: Allocation Creation
+- [ ] Click empty cell → dialog opens
+- [ ] Select project, set hours, save
+- [ ] Tile appears, totals update cleanly
+
+### Test 3: Allocation Group Editing
+- [ ] Click bar → Edit dialog with correct date range
+- [ ] Edit All Days works, Delete Group works
+
+### Test 4: Individual Day Editing
+- [ ] Click day chip → single-day edit
+- [ ] Back to Group button works
+- [ ] Set to 0h → deletes just that day
+
+### Test 5-8: Over-allocation warnings, Repeat Last Week, Slack DM, Manager Approvals
 
 ---
 
@@ -200,16 +143,25 @@ npm run slack:dev  # Slack (3001)
 - Supabase: https://supabase.com/dashboard/project/ovyppexeqwwaghwddtip
 - GitHub: https://github.com/ryyndynyyls/Zhuzh
 
+**Trigger calendar sync:**
+```bash
+curl -s -X POST "https://zhuzh-api-production.up.railway.app/api/calendar/sync" \
+  -H "Content-Type: application/json" \
+  -d '{"orgId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"}'
+```
+
 **Ryan's User ID:** `ce0c98c1-e9e6-4151-8a41-b4708c4c4795`
+**Org ID:** `a1b2c3d4-e5f6-7890-abcd-ef1234567890`
 
 ---
 
-## 📊 Database Stats (2026-01-30)
+## 📊 Database Stats (2026-02-16)
 
 | Metric | Count |
 |--------|-------|
 | Users | 27 |
 | Projects | 224 |
 | Allocations | 31,656 |
+| Calendar Events Synced | 18 |
 | Time Confirmations | 1,822 |
 | Time Entries | 5,077 |
