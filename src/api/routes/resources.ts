@@ -63,11 +63,12 @@ router.get('/calendar-data', async (req, res) => {
         .in('user_id', userIds),
 
       // Calendar events (Google Calendar OOO, PTO, etc.)
+      // Use same logic as whos-out: event overlaps range if it starts before range ends AND ends after range starts
       supabase
         .from('user_calendar_events')
-        .select('id, user_id, summary, start_time, end_time, is_all_day, event_type')
-        .gte('start_time', startDate as string)
-        .lte('start_time', (endDate as string) + 'T23:59:59')
+        .select('id, user_id, summary, start_time, end_time, all_day, event_type')
+        .lte('start_time', (endDate as string) + 'T23:59:59Z')
+        .gt('end_time', (startDate as string) + 'T00:00:00Z')
         .in('user_id', userIds)
         .in('event_type', ['pto', 'holiday', 'partial_pto', 'friday_off']),
     ]);
@@ -96,21 +97,47 @@ router.get('/calendar-data', async (req, res) => {
       'friday_off': 'pto',
     };
 
-    const calendarPto = (calendarResult.data || []).map((e: any) => {
-      const startDateStr = e.start_time.split('T')[0];
-      const hours = e.is_all_day ? 8 : Math.min(8,
-        (new Date(e.end_time).getTime() - new Date(e.start_time).getTime()) / (1000 * 60 * 60)
-      );
+    // Expand multi-day calendar events into per-day PTO entries
+    const calendarPto: any[] = [];
+    for (const e of (calendarResult.data || [])) {
+      const eventStart = new Date(e.start_time);
+      const eventEnd = new Date(e.end_time);
+      const rangeStart = new Date(startDate as string);
+      const rangeEnd = new Date(endDate as string);
+      const type = typeMap[e.event_type] || 'pto';
 
-      return {
-        id: e.id,
-        date: startDateStr,
-        hours,
-        type: typeMap[e.event_type] || 'pto',
-        notes: e.summary || null,
-        userId: e.user_id,
-      };
-    });
+      if (e.all_day) {
+        // All-day events: iterate each day from start to end (exclusive end per Google Calendar)
+        const current = new Date(Math.max(eventStart.getTime(), rangeStart.getTime()));
+        const end = new Date(Math.min(eventEnd.getTime(), rangeEnd.getTime() + 86400000));
+        while (current < end) {
+          const dateStr = current.toISOString().split('T')[0];
+          calendarPto.push({
+            id: `${e.id}_${dateStr}`,
+            date: dateStr,
+            hours: 8,
+            type,
+            notes: e.summary || null,
+            userId: e.user_id,
+          });
+          current.setDate(current.getDate() + 1);
+        }
+      } else {
+        // Timed events: single day entry
+        const dateStr = eventStart.toISOString().split('T')[0];
+        const hours = Math.min(8,
+          (eventEnd.getTime() - eventStart.getTime()) / (1000 * 60 * 60)
+        );
+        calendarPto.push({
+          id: e.id,
+          date: dateStr,
+          hours,
+          type,
+          notes: e.summary || null,
+          userId: e.user_id,
+        });
+      }
+    }
 
     // Merge PTO entries and calendar events, avoiding duplicates
     const existingKeys = new Set(ptoEntries.map((p: any) => `${p.userId}-${p.date}`));
