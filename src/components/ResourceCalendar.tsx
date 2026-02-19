@@ -56,6 +56,7 @@ import {
 import { ViewToggle } from './ViewToggle';
 import { UserAvatar } from './shared/UserAvatar';
 import { getDisciplineColor, normalizeDiscipline, DISCIPLINE_ORDER } from '../utils/disciplineColors';
+import { api } from '../lib/apiClient';
 
 interface ResourceCalendarProps {
   orgId: string;
@@ -702,6 +703,7 @@ function AllocationDialog({
   onClose: () => void;
   onSave: (data: {
     projectId: string;
+    phaseId?: string;
     startDate: string;
     endDate: string;
     plannedHours: number;
@@ -721,6 +723,9 @@ function AllocationDialog({
   viewMode?: ViewMode;
 }) {
   const [projectId, setProjectId] = useState(allocation?.projectId || '');
+  const [phaseId, setPhaseId] = useState<string>('');
+  const [phases, setPhases] = useState<Array<{ id: string; name: string }>>([]);
+  const [phasesLoading, setPhasesLoading] = useState(false);
   const [startDate, setStartDate] = useState(allocation?.startDate || clickedDate);
   const [endDate, setEndDate] = useState(allocation?.endDate || clickedDate);
   const [plannedHours, setPlannedHours] = useState(allocation?.plannedHours || 8);
@@ -731,6 +736,34 @@ function AllocationDialog({
   const [editMode, setEditMode] = useState<'all' | 'single'>('all');
   const [selectedDayId, setSelectedDayId] = useState<string | null>(null);
   const [groupHoursPerDay, setGroupHoursPerDay] = useState(allocationGroup?.hoursPerDay || 8);
+
+  // Fetch phases when project changes
+  React.useEffect(() => {
+    if (!projectId) {
+      setPhases([]);
+      setPhaseId('');
+      return;
+    }
+    let cancelled = false;
+    setPhasesLoading(true);
+    api.get<{ phases: Array<{ id: string; name: string }> }>(`/api/projects/${projectId}/phases`)
+      .then(data => {
+        if (!cancelled) {
+          setPhases(data.phases || []);
+          // If editing and allocation has a phaseId, pre-select it
+          if (allocation?.phaseId) {
+            setPhaseId(allocation.phaseId);
+          }
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setPhases([]);
+      })
+      .finally(() => {
+        if (!cancelled) setPhasesLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [projectId]);
 
   // Sort projects by priority (lower number = higher priority), then by name
   const sortedProjects = useMemo(() => {
@@ -751,6 +784,7 @@ function AllocationDialog({
   React.useEffect(() => {
     if (open) {
       setProjectId(allocation?.projectId || allocationGroup?.projectId || '');
+      setPhaseId(allocation?.phaseId || '');
       setStartDate(allocation?.startDate || clickedDate);
       setEndDate(allocation?.endDate || clickedDate);
       setPlannedHours(allocation?.plannedHours || 8);
@@ -798,6 +832,7 @@ function AllocationDialog({
     }
     onSave({
       projectId,
+      phaseId: phaseId || undefined,
       startDate,
       endDate,
       plannedHours,
@@ -1034,7 +1069,10 @@ function AllocationDialog({
           {/* Searchable Project Autocomplete - disabled when editing single day from group */}
           <Autocomplete
             value={selectedProject}
-            onChange={(_, newValue) => setProjectId(newValue?.id || '')}
+            onChange={(_, newValue) => {
+              setProjectId(newValue?.id || '');
+              setPhaseId(''); // Reset phase when project changes
+            }}
             options={sortedProjects}
             getOptionLabel={(option) => option.name}
             isOptionEqualToValue={(option, value) => option.id === value.id}
@@ -1071,6 +1109,29 @@ function AllocationDialog({
             autoHighlight
             openOnFocus
           />
+
+          {/* Phase selector - only shows when selected project has phases */}
+          {phases.length > 0 && (
+            <Autocomplete
+              value={phases.find(p => p.id === phaseId) || null}
+              onChange={(_, newValue) => setPhaseId(newValue?.id || '')}
+              options={phases}
+              getOptionLabel={(option) => option.name}
+              isOptionEqualToValue={(option, value) => option.id === value.id}
+              loading={phasesLoading}
+              disabled={isEditingSingleDayFromGroup}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Sub-project / Phase"
+                  placeholder="Select phase (optional)..."
+                />
+              )}
+              fullWidth
+              autoHighlight
+              openOnFocus
+            />
+          )}
 
           {/* Date range inputs - only for new allocations */}
           {!allocation && !allocationGroup && (
@@ -1464,6 +1525,7 @@ export function ResourceCalendar({
 
   const handleDialogSave = async (data: {
     projectId: string;
+    phaseId?: string;
     startDate: string;
     endDate: string;
     plannedHours: number;
@@ -1494,6 +1556,7 @@ export function ResourceCalendar({
         await createAllocation({
           userId: dialogContext.userId,
           projectId: data.projectId,
+          phaseId: data.phaseId,
           startDate: data.startDate,
           endDate: data.startDate, // Single-day model
           plannedHours: data.plannedHours,
