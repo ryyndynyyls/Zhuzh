@@ -13,7 +13,7 @@ import { TeamMemberModal } from '../components/TeamMemberModal';
 import { CommandBar, ResponsePanel } from '../components/voice';
 import { useResourceWizard } from '../hooks/useResourceWizard';
 import { useAuth } from '../contexts/AuthContext';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/apiClient';
 
 interface Project {
   id: string;
@@ -67,23 +67,18 @@ export function ResourceCalendarPage() {
   // Debug logging
   console.log('📅 ResourceCalendarPage render:', { user, authLoading, orgId: user?.org_id });
 
-  // Fetch projects for the dropdown
+  // Fetch projects for the dropdown (via API server, bypasses RLS)
   useEffect(() => {
     async function fetchProjects() {
       if (!user?.org_id) return;
 
       try {
-        const { data, error: fetchError } = await supabase
-          .from('projects')
-          .select('id, name, color, priority')
-          .eq('org_id', user.org_id)
-          .eq('status', 'active')
-          .order('priority', { ascending: true, nullsFirst: false })
-          .order('name');
-
-        if (fetchError) throw fetchError;
-        setProjects((data || []).map(p => ({
-          ...p,
+        const data = await api.get<{ projects: Array<{ id: string; name: string; color: string | null; priority: number | null; status: string }> }>(
+          `/api/projects?status=active`
+        );
+        setProjects((data.projects || []).map(p => ({
+          id: p.id,
+          name: p.name,
           color: p.color ?? '#808080',
           priority: p.priority ?? null,
         })));
