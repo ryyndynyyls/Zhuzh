@@ -227,7 +227,9 @@ function AllocationBlock({
   const daysSpan = daysBetween(allocation.startDate, allocation.endDate);
   
   // Use displayHours if provided (per-day), otherwise fall back to total
-  const hoursToShow = displayHours !== undefined ? displayHours : allocation.plannedHours;
+  // Round to avoid floating-point display issues (e.g., 7.999999 → 8)
+  const rawHours = displayHours !== undefined ? displayHours : allocation.plannedHours;
+  const hoursToShow = Math.round(rawHours * 100) / 100;
 
   const handleDragHandleMouseDown = (e: React.MouseEvent) => {
     e.stopPropagation(); // Don't trigger onClick
@@ -245,7 +247,7 @@ function AllocationBlock({
           <Typography variant="caption" display="block">
             {formatDateRange(allocation.startDate, allocation.endDate)} ({daysSpan} day{daysSpan > 1 ? 's' : ''})
           </Typography>
-          <Typography variant="caption" display="block">{Math.round(allocation.plannedHours * 100) / 100}h planned</Typography>
+          <Typography variant="caption" display="block">{hoursToShow % 1 === 0 ? hoursToShow : hoursToShow.toFixed(1)}h planned</Typography>
           {allocation.notes && (
             <Typography variant="caption" display="block" sx={{ fontStyle: 'italic', mt: 0.5 }}>
               {allocation.notes}
@@ -473,8 +475,8 @@ function WeekCellComponent({
         </Box>
       )}
 
-      {/* Add button for cells with allocations */}
-      {(filteredAllocations.length > 0 || cell.ptoEntries) && cell.totalHours < overThreshold && (
+      {/* Add button for cells with allocations - always visible regardless of hours */}
+      {(filteredAllocations.length > 0 || cell.ptoEntries) && (
         <IconButton
           size="small"
           onClick={onAddClick}
@@ -729,14 +731,18 @@ function AllocationDialog({
   const [phasesLoading, setPhasesLoading] = useState(false);
   const [startDate, setStartDate] = useState(allocation?.startDate || clickedDate);
   const [endDate, setEndDate] = useState(allocation?.endDate || clickedDate);
-  const [plannedHours, setPlannedHours] = useState(allocation?.plannedHours || 8);
+  const [hoursInput, setHoursInput] = useState<string>(allocation ? String(allocation.plannedHours) : '');
   const [notes, setNotes] = useState(allocation?.notes || '');
   const [isBillable, setIsBillable] = useState(allocation?.isBillable ?? true);
   const [useWholeWeek, setUseWholeWeek] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [editMode, setEditMode] = useState<'all' | 'single'>('all');
   const [selectedDayId, setSelectedDayId] = useState<string | null>(null);
-  const [groupHoursPerDay, setGroupHoursPerDay] = useState(allocationGroup?.hoursPerDay || 8);
+  const [groupHoursInput, setGroupHoursInput] = useState<string>(allocationGroup ? String(allocationGroup.hoursPerDay) : '');
+
+  // Derived number values with fallback to 8
+  const plannedHours = hoursInput === '' ? 8 : Number(hoursInput);
+  const groupHoursPerDay = groupHoursInput === '' ? 8 : Number(groupHoursInput);
 
   // Fetch phases when project changes
   React.useEffect(() => {
@@ -788,14 +794,14 @@ function AllocationDialog({
       setPhaseId(allocation?.phaseId || '');
       setStartDate(allocation?.startDate || clickedDate);
       setEndDate(allocation?.endDate || clickedDate);
-      setPlannedHours(allocation?.plannedHours || 8);
+      setHoursInput(allocation ? String(allocation.plannedHours) : '');
       setNotes(allocation?.notes || allocationGroup?.notes || '');
       setIsBillable(allocation?.isBillable ?? allocationGroup?.isBillable ?? true);
       setUseWholeWeek(false);
       setConfirmDelete(false);
       setEditMode('all');
       setSelectedDayId(null);
-      setGroupHoursPerDay(allocationGroup?.hoursPerDay || 8);
+      setGroupHoursInput(allocationGroup ? String(allocationGroup.hoursPerDay) : '');
     }
   }, [open, allocation, allocationGroup, clickedDate]);
 
@@ -807,11 +813,11 @@ function AllocationDialog({
       const monday = getWeekMonday(clickedDate);
       setStartDate(monday);
       setEndDate(monday); // Will expand to week via expandToWeek flag
-      setPlannedHours(8); // 8h per day
+      setHoursInput('8'); // 8h per day
     } else {
       setStartDate(clickedDate);
       setEndDate(clickedDate);
-      setPlannedHours(8);
+      setHoursInput('');
     }
   };
 
@@ -962,8 +968,9 @@ function AllocationDialog({
                   label="Hours per day"
                   type="number"
                   size="small"
-                  value={groupHoursPerDay}
-                  onChange={(e) => setGroupHoursPerDay(Number(e.target.value))}
+                  value={groupHoursInput}
+                  onChange={(e) => setGroupHoursInput(e.target.value)}
+                  placeholder="8"
                   inputProps={{ min: 0, max: 24, step: 0.5 }}
                   sx={{ width: 140 }}
                 />
@@ -995,7 +1002,7 @@ function AllocationDialog({
                       setEditMode('single');
                       setStartDate(date);
                       setEndDate(date);
-                      setPlannedHours(allocationGroup.hoursPerDay);
+                      setHoursInput(String(allocationGroup.hoursPerDay));
                     }}
                     sx={{
                       bgcolor: allocationGroup.projectColor,
@@ -1167,8 +1174,9 @@ function AllocationDialog({
           <TextField
             label="Hours (for this day)"
             type="number"
-            value={plannedHours}
-            onChange={(e) => setPlannedHours(Number(e.target.value))}
+            value={hoursInput}
+            onChange={(e) => setHoursInput(e.target.value)}
+            placeholder="8"
             inputProps={{ min: 0, max: 24, step: 0.5 }}
             fullWidth
             helperText={useWholeWeek ? '8h per day × 5 days = 40h total' : undefined}
@@ -1897,7 +1905,7 @@ export function ResourceCalendar({
         open={snackbar.open}
         autoHideDuration={4000}
         onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       >
         <Alert
           onClose={() => setSnackbar({ ...snackbar, open: false })}

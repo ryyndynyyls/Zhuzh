@@ -693,7 +693,37 @@ export function useResourceCalendar(options: UseResourceCalendarOptions) {
   };
 
   const extendAllocation = async (id: string, newEndDate: string) => {
-    await api.put(`/api/allocations/${id}`, { end_date: newEndDate });
+    // Find the original allocation to copy its properties
+    const original = allocations.find(a => a.id === id);
+    if (!original) {
+      throw new Error('Allocation not found');
+    }
+
+    // Create individual day records for each new day from day after original end to newEndDate
+    const startDay = new Date(original.endDate + 'T00:00:00');
+    startDay.setDate(startDay.getDate() + 1);
+    const endDay = new Date(newEndDate + 'T00:00:00');
+
+    const current = new Date(startDay);
+    while (current <= endDay) {
+      const dayOfWeek = current.getDay();
+      // Skip weekends
+      if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+        const dateStr = current.toISOString().split('T')[0];
+        await api.post('/api/allocations', {
+          user_id: original.userId,
+          project_id: original.projectId,
+          phase_id: original.phaseId || null,
+          start_date: dateStr,
+          end_date: dateStr,
+          planned_hours: original.plannedHours,
+          is_billable: original.isBillable,
+          notes: original.notes || null,
+        });
+      }
+      current.setDate(current.getDate() + 1);
+    }
+
     await fetchData();
   };
 
