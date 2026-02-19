@@ -30,6 +30,15 @@
   - Drag-to-extend creates proper day records with correct dates
   - Snackbar moved to top-center (no longer covers smart assistant)
   - Decimal display cleaned up with proper rounding
+- ✅ **COWORK_PTO_CALENDAR.md** — All 3 subtasks complete:
+  - PTO days from Google Calendar now show stripes (broadened detection for pto/holiday types)
+  - "Allocate for whole week" skips PTO days, holidays, and 0h work schedule days
+  - Batch "Clear Day" button on cells with 2+ allocations (trash icon, with confirm)
+- ✅ **COWORK_COLORS_BUDGET.md** — All 3 subtasks complete:
+  - Non-billable allocations show muted opacity + dashed left border + "NB" label
+  - Billable projects: budget in dollars ($), non-billable: budget in hours
+  - Budget summary card shows dollars spent for billable projects
+  - Archive properly sets is_active=false; dropdown filters by isActive=true
 
 ### Cowork Tasks Ready to Execute
 

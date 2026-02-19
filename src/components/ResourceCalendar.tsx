@@ -288,10 +288,18 @@ function AllocationBlock({
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
           position: 'relative',
+          // Non-billable visual differentiation: muted + dashed left border
+          ...(allocation.isBillable === false && {
+            opacity: 0.75,
+            borderLeft: '3px dashed rgba(255,255,255,0.4)',
+          }),
         }}
       >
         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {allocation.projectName}
+          {allocation.isBillable === false && (
+            <span style={{ marginLeft: 4, opacity: 0.8, fontSize: '0.65rem' }}>NB</span>
+          )}
         </span>
         <span style={{ opacity: 0.9, marginLeft: 4, flexShrink: 0 }}>
           {hoursToShow % 1 === 0 ? hoursToShow : hoursToShow.toFixed(1)}h
@@ -350,6 +358,7 @@ function WeekCellComponent({
   onAddClick,
   onAllocationClick,
   onDragExtendStart,
+  onClearDay,
   isDragTarget,
   isReadOnly,
   viewMode = 'month',
@@ -360,6 +369,7 @@ function WeekCellComponent({
   onAddClick: () => void;
   onAllocationClick?: (allocation: CalendarAllocation) => void;
   onDragExtendStart?: (allocation: CalendarAllocation) => void;
+  onClearDay?: (userId: string, date: string) => void;
   isDragTarget?: boolean;
   isReadOnly?: boolean;
   viewMode?: ViewMode;
@@ -380,12 +390,15 @@ function WeekCellComponent({
   // Get available hours for this day (default to 8 for standard schedule)
   const hoursAvailable = workSchedule?.[dayKey] ?? (dayOfWeek === 0 || dayOfWeek === 6 ? 0 : 8);
 
-  // Check for full-day PTO
+  // Check for PTO — show stripes for full-day PTO (>= 8h) or any PTO typed as 'pto' or 'holiday'
   const hasPto = cell.ptoEntries && cell.ptoEntries.length > 0;
-  const isFullDayPto = hasPto && cell.ptoHours && cell.ptoHours >= 8;
+  const isFullDayPto = hasPto && (
+    (cell.ptoHours && cell.ptoHours >= 8) ||
+    cell.ptoEntries?.some(p => p.type === 'pto' || p.type === 'holiday')
+  );
 
   // Determine unavailability status (only in week/day view)
-  // Show stripes ONLY when hours === 0 (not for reduced hours like 3h)
+  // Show stripes for 0h work schedule days OR full-day PTO/holidays
   const isUnavailable = (viewMode === 'week' || viewMode === 'day') && (hoursAvailable === 0 || isFullDayPto);
 
   // Diagonal stripe styles for unavailable days (0h only)
@@ -498,30 +511,57 @@ function WeekCellComponent({
         </IconButton>
       )}
 
-      {/* Total hours */}
+      {/* Total hours + Clear Day button */}
       {cell.totalHours > 0 && (
         <Box
           sx={{
             position: 'absolute',
             bottom: 4,
             left: 4,
+            right: 4,
             display: 'flex',
             alignItems: 'center',
+            justifyContent: 'space-between',
             gap: 0.5,
           }}
         >
-          <Typography
-            variant="caption"
-            sx={{
-              color: cell.isOverAllocated ? 'error.main' : 'text.secondary',
-              fontWeight: cell.isOverAllocated ? 600 : 400,
-            }}
-          >
-            {Math.round(cell.totalHours * 100) / 100}h
-          </Typography>
-          {cell.isOverAllocated && (
-            <Tooltip title={`Over ${overThreshold} hours`}>
-              <WarningIcon sx={{ fontSize: 14, color: 'error.main' }} />
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Typography
+              variant="caption"
+              sx={{
+                color: cell.isOverAllocated ? 'error.main' : 'text.secondary',
+                fontWeight: cell.isOverAllocated ? 600 : 400,
+              }}
+            >
+              {Math.round(cell.totalHours * 100) / 100}h
+            </Typography>
+            {cell.isOverAllocated && (
+              <Tooltip title={`Over ${overThreshold} hours`}>
+                <WarningIcon sx={{ fontSize: 14, color: 'error.main' }} />
+              </Tooltip>
+            )}
+          </Box>
+          {/* Clear Day button - visible on hover when 2+ allocations */}
+          {!isReadOnly && filteredAllocations.length >= 2 && onClearDay && (
+            <Tooltip title="Clear all allocations for this day">
+              <IconButton
+                size="small"
+                className="add-button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (window.confirm(`Clear all ${filteredAllocations.length} allocations for this day?`)) {
+                    onClearDay(userId, cell.date);
+                  }
+                }}
+                sx={{
+                  opacity: 0,
+                  transition: 'opacity 0.2s',
+                  p: 0.25,
+                  '&:hover': { bgcolor: 'error.light', color: '#fff' },
+                }}
+              >
+                <DeleteIcon sx={{ fontSize: 14 }} />
+              </IconButton>
             </Tooltip>
           )}
         </Box>
@@ -539,6 +579,7 @@ function UserRow({
   onAddClick,
   onAllocationClick,
   onDragExtendStart,
+  onClearDay,
   dragTargetWeeks,
   onUserClick,
   isReadOnly,
@@ -550,6 +591,7 @@ function UserRow({
   onAddClick: (userId: string, weekStart: string) => void;
   onAllocationClick?: (allocation: CalendarAllocation) => void;
   onDragExtendStart?: (allocation: CalendarAllocation) => void;
+  onClearDay?: (userId: string, date: string) => void;
   dragTargetWeeks?: string[];
   onUserClick?: (userId: string) => void;
   isReadOnly?: boolean;
@@ -670,6 +712,7 @@ function UserRow({
           onAddClick={() => !isReadOnly && onAddClick(user.id, weekStart)}
           onAllocationClick={isReadOnly ? undefined : onAllocationClick}
           onDragExtendStart={isReadOnly ? undefined : onDragExtendStart}
+          onClearDay={isReadOnly ? undefined : onClearDay}
           isDragTarget={dragTargetWeeks?.includes(weekStart)}
           isReadOnly={isReadOnly}
           viewMode={viewMode}
@@ -1330,6 +1373,7 @@ export function ResourceCalendar({
     updateAllocationGroup,
     deleteAllocation,
     deleteAllocationGroup,
+    clearDayAllocations,
     extendAllocation,
     repeatLastWeek,
     getGroupsForUser,
@@ -1354,6 +1398,24 @@ export function ResourceCalendar({
     targetDate: string | null;
     userId: string;
   } | null>(null);
+
+  // Handle clearing all allocations for a day
+  const handleClearDay = useCallback(async (userId: string, date: string) => {
+    try {
+      await clearDayAllocations(userId, date);
+      setSnackbar({
+        open: true,
+        message: `Cleared all allocations for ${formatWeekLabel(date)}`,
+        severity: 'success',
+      });
+    } catch (err) {
+      setSnackbar({
+        open: true,
+        message: `Failed to clear day: ${err instanceof Error ? err.message : 'Unknown error'}`,
+        severity: 'error',
+      });
+    }
+  }, [clearDayAllocations]);
 
   // Handle starting a drag extend operation
   const handleDragExtendStart = useCallback((allocation: CalendarAllocation) => {
@@ -1806,6 +1868,7 @@ export function ResourceCalendar({
                 onAddClick={handleAddClick}
                 onAllocationClick={handleAllocationClick}
                 onDragExtendStart={handleDragExtendStart}
+                onClearDay={handleClearDay}
                 dragTargetWeeks={
                   dragExtendState?.userId === userData.user.id
                     ? dragTargetDates

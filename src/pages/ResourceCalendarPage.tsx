@@ -74,7 +74,7 @@ export function ResourceCalendarPage() {
 
       try {
         const data = await api.get<{ projects: Array<{ id: string; name: string; color: string | null; priority: number | null; status: string }> }>(
-          `/api/projects?status=active`
+          `/api/projects?status=active&isActive=true`
         );
         setProjects((data.projects || []).map(p => ({
           id: p.id,

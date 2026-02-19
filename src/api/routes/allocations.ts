@@ -77,15 +77,65 @@ router.post('/', async (req, res) => {
   }
 
   try {
-    // Expand to full week of single-day records (Mon-Fri)
+    // Expand to full week of single-day records (Mon-Fri), skipping PTO days
     if (expandToWeek) {
       const monday = getWeekMonday(start_date);
-      const records = [];
 
+      // Check for PTO/calendar events this week to skip those days
+      const fridayDate = new Date(monday + 'T00:00:00');
+      fridayDate.setDate(fridayDate.getDate() + 4);
+      const fridayStr = formatDate(fridayDate);
+
+      const [ptoResult, calendarResult] = await Promise.all([
+        supabase
+          .from('pto_entries')
+          .select('date, hours, type')
+          .eq('user_id', user_id)
+          .gte('date', monday)
+          .lte('date', fridayStr),
+        supabase
+          .from('user_calendar_events')
+          .select('start_time, end_time, is_all_day, event_type')
+          .eq('user_id', user_id)
+          .gte('start_time', monday)
+          .lte('start_time', fridayStr + 'T23:59:59')
+          .in('event_type', ['pto', 'holiday', 'friday_off']),
+      ]);
+
+      // Build set of dates to skip (full-day PTO or holidays)
+      const skipDates = new Set<string>();
+      (ptoResult.data || []).forEach((p: any) => {
+        if (p.hours >= 8 || p.type === 'pto' || p.type === 'holiday') {
+          skipDates.add(p.date);
+        }
+      });
+      (calendarResult.data || []).forEach((e: any) => {
+        const dateStr = e.start_time.split('T')[0];
+        if (e.is_all_day || e.event_type === 'pto' || e.event_type === 'holiday' || e.event_type === 'friday_off') {
+          skipDates.add(dateStr);
+        }
+      });
+
+      // Also check work schedule to skip 0h days
+      const { data: userConfig } = await supabase
+        .from('users')
+        .select('resource_config')
+        .eq('id', user_id)
+        .single() as any;
+      const workSchedule = userConfig?.resource_config?.work_schedule;
+      const dayKeys = ['mon', 'tue', 'wed', 'thu', 'fri'] as const;
+
+      const records = [];
       for (let i = 0; i < 5; i++) {
         const d = new Date(monday + 'T00:00:00');
         d.setDate(d.getDate() + i);
         const dateStr = formatDate(d);
+
+        // Skip PTO days
+        if (skipDates.has(dateStr)) continue;
+
+        // Skip 0h work schedule days
+        if (workSchedule && workSchedule[dayKeys[i]] === 0) continue;
 
         records.push({
           user_id,
@@ -99,6 +149,10 @@ router.post('/', async (req, res) => {
           notes: notes || null,
           created_by: created_by || null,
         });
+      }
+
+      if (records.length === 0) {
+        return res.json({ success: true, count: 0, message: 'All days skipped (PTO or unavailable)' });
       }
 
       const { error } = await supabase
@@ -334,6 +388,34 @@ router.put('/:id', async (req, res) => {
   } catch (err: any) {
     console.error('Failed to update allocation:', err);
     res.status(500).json({ error: 'Failed to update allocation' });
+  }
+});
+
+/**
+ * Delete all allocations for a user on a specific day
+ * DELETE /api/allocations/clear-day
+ * Body: { userId: string, date: string }
+ */
+router.delete('/clear-day', async (req, res) => {
+  const { userId, date } = req.body;
+
+  if (!userId || !date) {
+    return res.status(400).json({ error: 'userId and date are required' });
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('allocations')
+      .delete()
+      .eq('user_id', userId)
+      .eq('start_date', date)
+      .select('id');
+
+    if (error) throw error;
+    res.json({ success: true, count: data?.length || 0 });
+  } catch (err: any) {
+    console.error('Failed to clear day allocations:', err);
+    res.status(500).json({ error: 'Failed to clear day allocations' });
   }
 });
 

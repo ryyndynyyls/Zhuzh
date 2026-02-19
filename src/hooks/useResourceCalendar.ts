@@ -732,6 +732,11 @@ export function useResourceCalendar(options: UseResourceCalendarOptions) {
     await fetchData();
   };
 
+  const clearDayAllocations = async (userId: string, date: string) => {
+    await api.delete('/api/allocations/clear-day', { userId, date });
+    await fetchData();
+  };
+
   const moveAllocation = async (id: string, newUserId: string, newStartDate: string) => {
     const original = allocations.find(a => a.id === id);
     if (!original) {
@@ -804,6 +809,7 @@ export function useResourceCalendar(options: UseResourceCalendarOptions) {
     deleteAllocationGroup,
     extendAllocation,
     deleteAllocation,
+    clearDayAllocations,
     moveAllocation,
     repeatLastWeek,
     getGroupsForUser,

@@ -524,17 +524,20 @@ export default function ProjectSettingsPage() {
             placeholder="Brief project description..."
           />
 
-          {/* Budget & Rate row */}
+          {/* Budget & Rate row — billable projects use dollars, non-billable use hours */}
           <Box sx={{ display: 'flex', gap: 2 }}>
             <TextField
-              label="Total Budget"
+              label={localBillable ? 'Total Budget (SOW)' : 'Total Budget'}
               value={localBudget}
               onChange={(e) => setLocalBudget(e.target.value)}
               type="number"
               sx={{ flex: 1 }}
-              InputProps={{
+              InputProps={localBillable ? {
+                startAdornment: <InputAdornment position="start">$</InputAdornment>,
+              } : {
                 endAdornment: <InputAdornment position="end">hours</InputAdornment>,
               }}
+              helperText={localBillable ? 'Contract/SOW value in dollars' : 'Total budgeted hours'}
             />
             <TextField
               label="Hourly Rate"
@@ -545,6 +548,7 @@ export default function ProjectSettingsPage() {
               InputProps={{
                 startAdornment: <InputAdornment position="start">$</InputAdornment>,
               }}
+              helperText={localBillable ? 'Billing rate' : 'Opportunity cost rate'}
             />
           </Box>
 
@@ -630,10 +634,20 @@ export default function ProjectSettingsPage() {
           </Button>
         </Box>
 
-        {/* Budget mismatch warning */}
-        {budgetMismatch && (
-          <Alert 
-            severity="warning" 
+        {/* Phase budget total display */}
+        {totalPhaseBudget > 0 && (
+          <Alert severity="info" icon={false} sx={{ mb: 1 }}>
+            Phase Budget Total: {totalPhaseBudget}h
+            {localBillable && projectBudget > 0 && parseFloat(localRate) > 0 && (
+              <> ({(totalPhaseBudget * parseFloat(localRate)).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })} at ${localRate}/hr)</>
+            )}
+          </Alert>
+        )}
+
+        {/* Budget mismatch warning — only for non-billable (hours-based budgets) */}
+        {!localBillable && budgetMismatch && (
+          <Alert
+            severity="warning"
             icon={<WarningIcon />}
             sx={{ mb: 2 }}
           >
@@ -734,7 +748,10 @@ export default function ProjectSettingsPage() {
 
         {(() => {
           const budget = parseFloat(localBudget) || 0;
-          const actual = project?.totalActual || 0;
+          const actualHours = project?.totalActual || 0;
+          const rate = parseFloat(localRate) || 0;
+          // For billable projects: compare dollars; for non-billable: compare hours
+          const actual = localBillable && rate > 0 ? actualHours * rate : actualHours;
           const remaining = budget - actual;
           const burnPercent = budget > 0 ? Math.min((actual / budget) * 100, 100) : 0;
           const isOverBudget = actual > budget && budget > 0;
@@ -765,7 +782,7 @@ export default function ProjectSettingsPage() {
                       color: isDark ? colors.dark.text.primary : colors.light.text.primary,
                     }}
                   >
-                    {budget > 0 ? `${budget}h` : '—'}
+                    {budget > 0 ? (localBillable ? `$${budget.toLocaleString()}` : `${budget}h`) : '—'}
                   </Typography>
                 </Box>
 
@@ -780,7 +797,7 @@ export default function ProjectSettingsPage() {
                       fontSize: typography.fontSize.xs,
                     }}
                   >
-                    Hours Used
+                    {localBillable && rate > 0 ? 'Spent' : 'Hours Used'}
                   </Typography>
                   <Typography
                     variant="h5"
@@ -794,7 +811,7 @@ export default function ProjectSettingsPage() {
                         : (isDark ? colors.dark.text.primary : colors.light.text.primary),
                     }}
                   >
-                    {actual.toFixed(1)}h
+                    {localBillable && rate > 0 ? `$${actual.toLocaleString(undefined, { maximumFractionDigits: 0 })}` : `${actualHours.toFixed(1)}h`}
                   </Typography>
                 </Box>
 
@@ -824,7 +841,7 @@ export default function ProjectSettingsPage() {
                           : (isDark ? colors.dark.text.primary : colors.light.text.primary),
                       }}
                     >
-                      {budget > 0 ? `${remaining.toFixed(1)}h` : '—'}
+                      {budget > 0 ? (localBillable ? `$${remaining.toLocaleString(undefined, { maximumFractionDigits: 0 })}` : `${remaining.toFixed(1)}h`) : '—'}
                     </Typography>
                     {isOverBudget && (
                       <TrendingDownIcon sx={{ color: isDark ? colors.dark.error.text : colors.light.error.text, fontSize: 18 }} />
